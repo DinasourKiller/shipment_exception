@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control Tower — Web Testing Console</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/30">
+        CT
+      </div>
+      <div>
+        <h1 class="text-base font-semibold leading-tight text-white flex items-center gap-2">
+          Shipment Exception Control Tower
+          <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Testing Console</span>
+        </h1>
+        <p class="text-xs text-slate-400">Interactive Web Harness (Phases 1–8)</p>
+      </div>
+    </div>
+
+    <!-- Right Controls: Status & User Info -->
+    <div class="flex items-center gap-4">
+      <div id="system-status-pill" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        API Online
+      </div>
+
+      <!-- Auth profile chip -->
+      <div id="user-chip" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs">
+        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+        <div class="text-left">
+          <div id="user-chip-name" class="font-medium text-slate-200">Not Logged In</div>
+          <div id="user-chip-role" class="text-[10px] text-slate-400">Guest</div>
+        </div>
+      </div>
+
+      <a href="/docs" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 flex items-center gap-1.5 transition">
+        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+        Swagger Docs
+      </a>
+    </div>
+  </header>
+
+  <!-- Secondary Tab Navigation -->
+  <nav class="bg-slate-950/60 border-b border-slate-800 px-6 flex gap-6 text-sm">
+    <button onclick="switchTab('auth')" id="nav-auth" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition tab-active flex items-center gap-2">
+      <i data-lucide="key" class="w-4 h-4"></i> Auth & Roles
+    </button>
+    <button onclick="switchTab('shipments')" id="nav-shipments" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+      <i data-lucide="package" class="w-4 h-4"></i> Shipments & Ingestion
+    </button>
+    <button onclick="switchTab('tracking')" id="nav-tracking" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+      <i data-lucide="navigation" class="w-4 h-4"></i> Tracking & ETA Engine
+    </button>
+    <button onclick="switchTab('users')" id="nav-users" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+      <i data-lucide="users" class="w-4 h-4"></i> Users & RBAC
+    </button>
+    <button onclick="switchTab('diagnostics')" id="nav-diagnostics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+      <i data-lucide="activity" class="w-4 h-4"></i> System Diagnostics
+    </button>
+  </nav>
+
+  <!-- Main Content Body -->
+  <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+
+    <!-- TAB 1: AUTH & ROLES -->
+    <section id="tab-auth" class="space-y-6">
+      <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-base font-semibold text-white">One-Click Enterprise Role Login</h2>
+            <p class="text-xs text-slate-400">Click any card below to instantly authenticate as that role and acquire an RS256 JWT access token.</p>
+          </div>
+          <button onclick="logout()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-medium transition flex items-center gap-1.5">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" id="demo-users-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Current Session Token Viewer -->
+      <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+        <h3 class="text-sm font-semibold text-slate-200 mb-2 flex items-center gap-2">
+          <i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i>
+          Active Session Claims & Token
+        </h3>
+        <div id="session-info" class="text-xs text-slate-400 space-y-2">
+          <p>No active token in local session. Please select a user above to authenticate.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: SHIPMENTS & INGESTION -->
+    <section id="tab-shipments" class="space-y-6 hidden">
+      <!-- Actions Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl">
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="syncSingleMendix('MDX-SHP-1001')" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="download-cloud" class="w-3.5 h-3.5"></i> Sync MDX-SHP-1001 (Road)
+          </button>
+          <button onclick="syncSingleMendix('MDX-SHP-1002')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="plane" class="w-3.5 h-3.5"></i> Sync MDX-SHP-1002 (Air)
+          </button>
+          <button onclick="syncBatchMendix()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition flex items-center gap-1.5">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Batch Sync Mendix
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input type="text" id="shipment-search" oninput="debounceShipmentSearch()" placeholder="Search Order, ID, Carrier..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500">
+          <select id="shipment-filter-status" onchange="loadShipments()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+            <option value="">All Statuses</option>
+            <option value="CREATED">CREATED</option>
+            <option value="BOOKED">BOOKED</option>
+            <option value="PICKED_UP">PICKED_UP</option>
+            <option value="IN_TRANSIT">IN_TRANSIT</option>
+            <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
+            <option value="DELIVERED">DELIVERED</option>
+            <option value="DELAYED">DELAYED</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Shipments Table -->
+      <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700/60">
+              <tr>
+                <th class="py-3 px-4">Ref / Order</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Mode</th>
+                <th class="py-3 px-4">Carrier</th>
+                <th class="py-3 px-4">Origin &rarr; Destination</th>
+                <th class="py-3 px-4">Est. Delivery</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="shipments-tbody" class="divide-y divide-slate-800">
+              <tr>
+                <td colspan="7" class="py-6 text-center text-slate-500">Loading shipments...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: TRACKING & ETA ENGINE -->
+    <section id="tab-tracking" class="space-y-6 hidden">
+      <!-- Shipment Selector for Tracking -->
+      <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <label class="text-xs font-medium text-slate-300">Selected Shipment:</label>
+          <select id="tracking-shipment-select" onchange="loadTrackingTimeline()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200">
+            <option value="">Select a shipment...</option>
+          </select>
+        </div>
+        <button onclick="recalculateEta()" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="calculator" class="w-3.5 h-3.5"></i> Recalculate Delivery ETA
+        </button>
+      </div>
+
+      <!-- Timeline & Event Ingestion Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Milestone Progress & Visual Checkpoints (2 cols) -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+              Milestone Checklist & Delay Detection
+            </h3>
+            <div id="milestones-container" class="space-y-3">
+              <p class="text-xs text-slate-500">Select a shipment above to view tracking milestones.</p>
+            </div>
+          </div>
+
+          <!-- Raw Telemetry Event Feed -->
+          <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+            <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+              <i data-lucide="history" class="w-4 h-4 text-blue-400"></i>
+              Event Telemetry History
+            </h3>
+            <div id="events-container" class="space-y-2.5 text-xs">
+              <p class="text-slate-500">No events recorded yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Record New Event or GPS Ping (1 col) -->
+        <div class="space-y-6">
+          <!-- Record Milestone Scan -->
+          <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 space-y-3">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i data-lucide="qr-code" class="w-4 h-4 text-blue-400"></i>
+              Record Checkpoint Scan
+            </h3>
+            <div class="space-y-2 text-xs">
+              <div>
+                <label class="text-slate-400 block mb-1">Event Code</label>
+                <select id="event-input-code" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200">
+                  <option value="PICKUP_COMPLETED">PICKUP_COMPLETED</option>
+                  <option value="HUB_TRANSIT">HUB_TRANSIT</option>
+                  <option value="HUB_DEPARTED">HUB_DEPARTED</option>
+                  <option value="OUT_FOR_DELIVERY">OUT_FOR_DELIVERY</option>
+                  <option value="DELIVERED">DELIVERED</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">Location Name</label>
+                <input type="text" id="event-input-location" value="St. Louis Transit Hub, MO" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200">
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">Notes</label>
+                <input type="text" id="event-input-notes" value="Dock scan completed" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200">
+              </div>
+              <button onclick="submitScanEvent()" class="w-full mt-2 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i> Submit Scan Event
+              </button>
+            </div>
+          </div>
+
+          <!-- Send GPS Telemetry Ping -->
+          <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 space-y-3">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i data-lucide="radio" class="w-4 h-4 text-emerald-400"></i>
+              Send GPS Telemetry Ping
+            </h3>
+            <div class="space-y-2 text-xs">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-slate-400 block mb-1">Latitude</label>
+                  <input type="number" step="0.0001" id="gps-lat" value="41.8781" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200">
+                </div>
+                <div>
+                  <label class="text-slate-400 block mb-1">Longitude</label>
+                  <input type="number" step="0.0001" id="gps-lng" value="-87.6298" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200">
+                </div>
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">Description</label>
+                <input type="text" id="gps-loc" value="I-55 Southbound Mile Marker 42" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200">
+              </div>
+              <button onclick="submitGpsPing()" class="w-full mt-2 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Broadcast GPS Ping
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: USERS & RBAC -->
+    <section id="tab-users" class="space-y-6 hidden">
+      <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-700/60 flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-white">System Users & Enterprise Roles</h3>
+          <input type="text" id="user-search" oninput="loadUsers()" placeholder="Search Users..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700/60">
+              <tr>
+                <th class="py-3 px-4">User</th>
+                <th class="py-3 px-4">Assigned Roles</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Created</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody" class="divide-y divide-slate-800">
+              <tr><td colspan="4" class="py-6 text-center text-slate-500">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: DIAGNOSTICS & MENDIX SANDBOX -->
+    <section id="tab-diagnostics" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Subsystem Health -->
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i data-lucide="cpu" class="w-4 h-4 text-blue-400"></i> Subsystems Health
+            </h3>
+            <button onclick="checkHealth()" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+            </button>
+          </div>
+          <div id="subsystem-cards" class="space-y-2 text-xs">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Mendix Sandbox Direct Query -->
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5 space-y-4">
+          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+            <i data-lucide="server" class="w-4 h-4 text-indigo-400"></i> Mendix External REST Sandbox
+          </h3>
+          <div class="space-y-2 text-xs">
+            <p class="text-slate-400">Query the Mendix Sandbox adapter directly to inspect upstream payload schemas before transformation:</p>
+            <div class="flex gap-2">
+              <button onclick="queryMendixSandbox('MDX-SHP-1001')" class="px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">
+                Inspect MDX-SHP-1001
+              </button>
+              <button onclick="queryMendixSandbox('MDX-SHP-1002')" class="px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">
+                Inspect MDX-SHP-1002
+              </button>
+            </div>
+            <pre id="mendix-preview" class="p-3 bg-slate-950 rounded-lg text-[11px] text-slate-300 overflow-x-auto max-h-56">Click an inspect button above to view raw Mendix JSON payload.</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Live Toast Notification Container -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-20 opacity-0 pointer-events-none px-4 py-3 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2 bg-slate-800 text-white border border-slate-700">
+    <span id="toast-icon"></span>
+    <span id="toast-msg"></span>
+  </div>
+
+  <!-- JavaScript Application Logic -->
+  <script>
+    const DEMO_ACCOUNTS = [
+      { name: "System Admin", email: "admin@controltower.corp", role: "System Administrator", desc: "Unrestricted master access" },
+      { name: "Tower Analyst", email: "analyst@controltower.corp", role: "Control Tower Analyst", desc: "Shipments, Exceptions & Analytics" },
+      { name: "Dispatcher / Planner", email: "dispatcher@controltower.corp", role: "Dispatcher / Planner", desc: "Shipments & Milestone Dispatch" },
+      { name: "Operations Manager", email: "manager@controltower.corp", role: "Operations Manager", desc: "Full Operational Management" },
+      { name: "Carrier Rep", email: "carrier@controltower.corp", role: "Carrier", desc: "Carrier Tracking & Responses" },
+      { name: "Hub Supervisor", email: "warehouse@controltower.corp", role: "Warehouse Supervisor", desc: "Dock & Milestone Execution" },
+      { name: "Customer Support", email: "support@controltower.corp", role: "Customer Service", desc: "Tracking Visibility" },
+    ];
+
+    let currentToken = localStorage.getItem("ct_token") || null;
+    let currentUser = JSON.parse(localStorage.getItem("ct_user") || "null");
+
+    // Initialize UI
+    window.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      renderDemoAccounts();
+      updateUserChip();
+      checkHealth();
+      if (currentToken) {
+        loadShipments();
+      }
+    });
+
+    // Tab Switching
+    function switchTab(tab) {
+      ['auth', 'shipments', 'tracking', 'users', 'diagnostics'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        document.getElementById(`nav-${t}`).classList.remove('tab-active');
+      });
+      document.getElementById(`tab-${tab}`).classList.remove('hidden');
+      document.getElementById(`nav-${tab}`).classList.add('tab-active');
+
+      if (tab === 'shipments') loadShipments();
+      if (tab === 'tracking') populateTrackingDropdown();
+      if (tab === 'users') loadUsers();
+      if (tab === 'diagnostics') checkHealth();
+    }
+
+    // Render Demo Accounts
+    function renderDemoAccounts() {
+      const grid = document.getElementById("demo-users-grid");
+      grid.innerHTML = DEMO_ACCOUNTS.map(u => `
+        <div onclick="loginAs('${u.email}')" class="p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/60 hover:border-blue-500/50 cursor-pointer transition shadow-sm group">
+          <div class="flex items-center justify-between mb-1">
+            <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">${u.name}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">${u.role.split(' ')[0]}</span>
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono">${u.email}</div>
+          <div class="text-[10px] text-slate-500 mt-1">${u.desc}</div>
+        </div>
+      `).join("");
+    }
+
+    // Login Action
+    async function loginAs(email) {
+      showToast("Authenticating as " + email + "...", "info");
+      try {
+        const resp = await fetch("/api/v1/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email, password: "Password123!" }),
+        });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          currentToken = json.data.access_token;
+          currentUser = json.data.user;
+          localStorage.setItem("ct_token", currentToken);
+          localStorage.setItem("ct_user", JSON.stringify(currentUser));
+          updateUserChip();
+          showToast(`Logged in as ${currentUser.full_name}`, "success");
+        } else {
+          showToast(json.error?.message || "Login failed", "error");
+        }
+      } catch (err) {
+        showToast("Network error: " + err.message, "error");
+      }
+    }
+
+    function logout() {
+      currentToken = null;
+      currentUser = null;
+      localStorage.removeItem("ct_token");
+      localStorage.removeItem("ct_user");
+      updateUserChip();
+      showToast("Logged out successfully", "info");
+    }
+
+    function updateUserChip() {
+      const nameEl = document.getElementById("user-chip-name");
+      const roleEl = document.getElementById("user-chip-role");
+      const sessionInfo = document.getElementById("session-info");
+
+      if (currentUser && currentToken) {
+        const role = (currentUser.roles && currentUser.roles[0]?.name) || "User";
+        nameEl.textContent = currentUser.full_name;
+        roleEl.textContent = role;
+        sessionInfo.innerHTML = `
+          <div class="p-3 bg-slate-900 rounded-lg space-y-1">
+            <div><strong class="text-slate-300">User ID:</strong> <span class="font-mono text-blue-400">${currentUser.id}</span></div>
+            <div><strong class="text-slate-300">Email:</strong> ${currentUser.email}</div>
+            <div><strong class="text-slate-300">Role:</strong> <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">${role}</span></div>
+            <div class="mt-2"><strong class="text-slate-300">JWT Access Token:</strong>
+              <div class="font-mono text-[10px] text-slate-500 break-all bg-slate-950 p-2 rounded mt-1">${currentToken}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        nameEl.textContent = "Not Logged In";
+        roleEl.textContent = "Guest";
+        sessionInfo.innerHTML = `<p class="text-slate-500">No active token in local session. Please select a user above to authenticate.</p>`;
+      }
+      lucide.createIcons();
+    }
+
+    // Helper for Authenticated Fetch
+    function authFetch(url, options = {}) {
+      options.headers = options.headers || {};
+      if (currentToken) {
+        options.headers["Authorization"] = `Bearer ${currentToken}`;
+      }
+      return fetch(url, options);
+    }
+
+    // TAB 2: Shipments
+    let searchDebounceTimer = null;
+    function debounceShipmentSearch() {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(loadShipments, 300);
+    }
+
+    async function loadShipments() {
+      if (!currentToken) {
+        document.getElementById("shipments-tbody").innerHTML = `
+          <tr><td colspan="7" class="py-6 text-center text-amber-400">Please log in on the 'Auth & Roles' tab first to view shipments.</td></tr>
+        `;
+        return;
+      }
+
+      const search = document.getElementById("shipment-search").value;
+      const status = document.getElementById("shipment-filter-status").value;
+      let url = `/api/v1/shipments?page=1&page_size=50`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (status) url += `&status=${encodeURIComponent(status)}`;
+
+      try {
+        const resp = await authFetch(url);
+        const json = await resp.json();
+        const tbody = document.getElementById("shipments-tbody");
+
+        if (resp.ok && json.success) {
+          const items = json.data.items;
+          if (items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No shipments found. Use the buttons above to sync from Mendix.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = items.map(s => `
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-3 px-4 font-mono font-medium text-white">${s.external_reference}<div class="text-[10px] text-slate-500">${s.order_number}</div></td>
+              <td class="py-3 px-4">${statusBadge(s.status)}</td>
+              <td class="py-3 px-4">${s.transport_mode}</td>
+              <td class="py-3 px-4 font-medium">${s.carrier_name} <span class="text-slate-500 text-[10px]">(${s.carrier_code})</span></td>
+              <td class="py-3 px-4">${s.origin_city} &rarr; ${s.destination_city}</td>
+              <td class="py-3 px-4 text-slate-300 font-mono text-[11px]">${formatDate(s.estimated_delivery)}</td>
+              <td class="py-3 px-4 text-right space-x-2">
+                <button onclick="viewTrackingFor('${s.id}')" class="px-2 py-1 rounded bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-[11px] transition">
+                  Track
+                </button>
+              </td>
+            </tr>
+          `).join("");
+        } else {
+          tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-400">${json.error?.message || 'Failed to load shipments'}</td></tr>`;
+        }
+      } catch (err) {
+        document.getElementById("shipments-tbody").innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-400">${err.message}</td></tr>`;
+      }
+    }
+
+    function statusBadge(st) {
+      let color = "bg-slate-700 text-slate-300 border-slate-600";
+      if (st === "IN_TRANSIT") color = "bg-blue-500/10 text-blue-400 border-blue-500/30";
+      if (st === "DELIVERED") color = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+      if (st === "DELAYED") color = "bg-amber-500/10 text-amber-400 border-amber-500/30";
+      if (st === "EXCEPTION") color = "bg-rose-500/10 text-rose-400 border-rose-500/30";
+      return `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium border ${color}">${st}</span>`;
+    }
+
+    async function syncSingleMendix(ref) {
+      showToast(`Ingesting ${ref} from Mendix...`, "info");
+      try {
+        const resp = await authFetch(`/api/v1/shipments/sync/${ref}`, { method: "POST" });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          showToast(`Successfully synced ${ref}`, "success");
+          loadShipments();
+          populateTrackingDropdown();
+        } else {
+          showToast(json.error?.message || "Sync failed", "error");
+        }
+      } catch (err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    async function syncBatchMendix() {
+      showToast("Triggering batch Mendix sync...", "info");
+      try {
+        const resp = await authFetch("/api/v1/shipments/sync?limit=20", { method: "POST" });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          showToast(`Synced ${json.data.synced_count} shipments from Mendix`, "success");
+          loadShipments();
+          populateTrackingDropdown();
+        } else {
+          showToast(json.error?.message || "Batch sync failed", "error");
+        }
+      } catch (err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    // TAB 3: Tracking
+    async function populateTrackingDropdown() {
+      if (!currentToken) return;
+      try {
+        const resp = await authFetch("/api/v1/shipments?page=1&page_size=20");
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          const select = document.getElementById("tracking-shipment-select");
+          const selectedVal = select.value;
+          select.innerHTML = '<option value="">Select a shipment...</option>' + json.data.items.map(s => `
+            <option value="${s.id}" ${s.id === selectedVal ? 'selected' : ''}>${s.external_reference} (${s.order_number}) - ${s.carrier_code}</option>
+          `).join("");
+        }
+      } catch (err) {}
+    }
+
+    function viewTrackingFor(shipmentId) {
+      switchTab('tracking');
+      const select = document.getElementById("tracking-shipment-select");
+      select.value = shipmentId;
+      loadTrackingTimeline();
+    }
+
+    async function loadTrackingTimeline() {
+      const select = document.getElementById("tracking-shipment-select");
+      const shipmentId = select.value;
+      if (!shipmentId) return;
+
+      const mContainer = document.getElementById("milestones-container");
+      const eContainer = document.getElementById("events-container");
+
+      try {
+        const resp = await authFetch(`/api/v1/tracking/${shipmentId}/timeline`);
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          const data = json.data;
+
+          // Render milestones
+          mContainer.innerHTML = data.milestones.map(m => {
+            const isDone = m.status === "COMPLETED";
+            const icon = isDone ? "check-circle" : (m.status === "IN_PROGRESS" ? "clock" : "circle");
+            const color = isDone ? "text-emerald-400" : (m.status === "IN_PROGRESS" ? "text-blue-400" : "text-slate-500");
+            const delayPill = m.is_delayed
+              ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">+${m.delay_minutes}m delay</span>`
+              : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">On Schedule</span>`;
+
+            return `
+              <div class="flex items-start justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-700/60">
+                <div class="flex items-start gap-2.5">
+                  <i data-lucide="${icon}" class="w-4 h-4 ${color} mt-0.5"></i>
+                  <div>
+                    <div class="font-medium text-xs text-white">${m.title} <span class="text-slate-500 text-[10px]">(${m.event_code})</span></div>
+                    <div class="text-[11px] text-slate-400">${m.location_name || 'Location pending'}</div>
+                    <div class="text-[10px] text-slate-500 font-mono mt-0.5">Planned: ${formatDate(m.planned_time)} | Actual: ${formatDate(m.actual_time)}</div>
+                  </div>
+                </div>
+                <div>${delayPill}</div>
+              </div>
+            `;
+          }).join("");
+
+          // Render events history
+          eContainer.innerHTML = data.events.length === 0
+            ? `<p class="text-slate-500">No telemetry events recorded for this shipment yet.</p>`
+            : data.events.map(e => `
+              <div class="p-2.5 rounded-lg bg-slate-900/60 border border-slate-700/50 flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-slate-200">${e.event_name} <span class="font-mono text-[10px] text-blue-400">(${e.event_code})</span></div>
+                  <div class="text-slate-400 text-[11px]">${e.location_name || (e.latitude ? `GPS: ${e.latitude}, ${e.longitude}` : 'Carrier Update')}</div>
+                </div>
+                <div class="text-right text-[10px] text-slate-500 font-mono">
+                  ${formatDate(e.event_timestamp)}
+                  <div class="text-slate-400">${e.source}</div>
+                </div>
+              </div>
+            `).join("");
+
+          lucide.createIcons();
+        }
+      } catch (err) {
+        showToast("Error loading timeline: " + err.message, "error");
+      }
+    }
+
+    async function submitScanEvent() {
+      const select = document.getElementById("tracking-shipment-select");
+      const shipmentId = select.value;
+      if (!shipmentId) { showToast("Please select a shipment first", "error"); return; }
+
+      const code = document.getElementById("event-input-code").value;
+      const location = document.getElementById("event-input-location").value;
+      const notes = document.getElementById("event-input-notes").value;
+
+      try {
+        const resp = await authFetch(`/api/v1/tracking/${shipmentId}/events`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_code: code,
+            event_name: `Scan: ${code}`,
+            location_name: location,
+            notes: notes,
+            source: "CARRIER_API",
+          }),
+        });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          showToast(`Recorded ${code} event!`, "success");
+          loadTrackingTimeline();
+        } else {
+          showToast(json.error?.message || "Failed to record event", "error");
+        }
+      } catch (err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    async function submitGpsPing() {
+      const select = document.getElementById("tracking-shipment-select");
+      const shipmentId = select.value;
+      if (!shipmentId) { showToast("Please select a shipment first", "error"); return; }
+
+      const lat = parseFloat(document.getElementById("gps-lat").value);
+      const lng = parseFloat(document.getElementById("gps-lng").value);
+      const loc = document.getElementById("gps-loc").value;
+
+      try {
+        const resp = await authFetch(`/api/v1/tracking/${shipmentId}/events`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_code: "GPS_PING",
+            event_name: "Live GPS Telemetry Ping",
+            latitude: lat,
+            longitude: lng,
+            location_name: loc,
+            source: "GPS_DEVICE",
+          }),
+        });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          showToast("GPS Telemetry Broadcasted!", "success");
+          loadTrackingTimeline();
+        } else {
+          showToast(json.error?.message || "GPS Ping Failed", "error");
+        }
+      } catch (err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    async function recalculateEta() {
+      const select = document.getElementById("tracking-shipment-select");
+      const shipmentId = select.value;
+      if (!shipmentId) { showToast("Please select a shipment first", "error"); return; }
+
+      try {
+        const resp = await authFetch(`/api/v1/tracking/${shipmentId}/recalculate-eta`, { method: "POST" });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          const res = json.data;
+          showToast(res.message, res.is_delayed ? "warning" : "success");
+          loadTrackingTimeline();
+        } else {
+          showToast(json.error?.message || "ETA recalculation failed", "error");
+        }
+      } catch (err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    // TAB 4: Users & RBAC
+    async function loadUsers() {
+      if (!currentToken) return;
+      const search = document.getElementById("user-search")?.value || "";
+      let url = "/api/v1/users?page=1&page_size=20";
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+
+      try {
+        const resp = await authFetch(url);
+        const json = await resp.json();
+        const tbody = document.getElementById("users-tbody");
+        if (resp.ok && json.success) {
+          tbody.innerHTML = json.data.items.map(u => `
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-3 px-4 font-medium text-white">${u.full_name} <div class="text-[10px] text-slate-500">${u.email}</div></td>
+              <td class="py-3 px-4">
+                ${(u.roles || []).map(r => `<span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px]">${r.name}</span>`).join(" ")}
+              </td>
+              <td class="py-3 px-4">${u.is_active ? '<span class="text-emerald-400">Active</span>' : '<span class="text-rose-400">Inactive</span>'}</td>
+              <td class="py-3 px-4 font-mono text-[10px] text-slate-500">${formatDate(u.created_at)}</td>
+            </tr>
+          `).join("");
+        }
+      } catch (err) {}
+    }
+
+    // TAB 5: Diagnostics
+    async function checkHealth() {
+      try {
+        const resp = await fetch("/health");
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          const d = json.data;
+          const container = document.getElementById("subsystem-cards");
+          container.innerHTML = `
+            <div class="p-3 bg-slate-900 rounded-lg flex items-center justify-between">
+              <span>Overall Platform Status</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">${d.status.toUpperCase()}</span>
+            </div>
+            <div class="p-3 bg-slate-900 rounded-lg flex items-center justify-between">
+              <span>PostgreSQL 18 Database</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">${d.components.database.toUpperCase()}</span>
+            </div>
+            <div class="p-3 bg-slate-900 rounded-lg flex items-center justify-between">
+              <span>Mendix REST Adapter</span>
+              <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-semibold border border-blue-500/20">${d.components.mendix_adapter.toUpperCase()}</span>
+            </div>
+            <div class="p-3 bg-slate-900 rounded-lg flex items-center justify-between">
+              <span>Ollama AI Runtime</span>
+              <span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20">${d.components.ai_provider.toUpperCase()}</span>
+            </div>
+          `;
+        }
+      } catch (err) {}
+    }
+
+    async function queryMendixSandbox(ref) {
+      try {
+        const resp = await fetch(`/api/v1/mock/mendix/shipments/${ref}`, {
+          headers: { "X-API-Key": "test-key" }
+        });
+        const json = await resp.json();
+        document.getElementById("mendix-preview").textContent = JSON.stringify(json, null, 2);
+      } catch (err) {
+        document.getElementById("mendix-preview").textContent = "Error: " + err.message;
+      }
+    }
+
+    // Toast notifications
+    function showToast(msg, type = "info") {
+      const toast = document.getElementById("toast");
+      const icon = document.getElementById("toast-icon");
+      const text = document.getElementById("toast-msg");
+
+      text.textContent = msg;
+      let iconHtml = 'ℹ️';
+      if (type === "success") iconHtml = '✅';
+      if (type === "error") iconHtml = '❌';
+      if (type === "warning") iconHtml = '⚠️';
+      icon.innerHTML = iconHtml;
+
+      toast.classList.remove("translate-y-20", "opacity-0");
+      setTimeout(() => {
+        toast.classList.add("translate-y-20", "opacity-0");
+      }, 3500);
+    }
+
+    function formatDate(dtStr) {
+      if (!dtStr) return "N/A";
+      try {
+        const d = new Date(dtStr);
+        return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } catch (e) {
+        return dtStr;
+      }
+    }
+  </script>
+</body>
+</html>

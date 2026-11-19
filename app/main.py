@@ -4,6 +4,7 @@ Initializes FastAPI application with middleware, exception handlers,
 lifespan events, and core monitoring endpoints.
 """
 
+import os
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -13,7 +14,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.common.constants import CORRELATION_ID_HEADER
@@ -288,10 +289,18 @@ def create_application() -> FastAPI:
         prefix=settings.API_V1_PREFIX,
     )
 
+    # Web Testing Console routes
+    @app.get("/console", response_class=FileResponse, include_in_schema=False)
+    @app.get("/ui", response_class=FileResponse, include_in_schema=False)
+    @app.get("/test", response_class=FileResponse, include_in_schema=False)
+    async def serve_testing_console():
+        index_path = os.path.join(os.path.dirname(__file__), "static", "index.html")
+        return FileResponse(index_path)
+
     # Convenience Redirects to Swagger UI
     @app.get("/", include_in_schema=False)
     async def root_redirect():
-        return RedirectResponse(url=f"{settings.API_V1_PREFIX}/docs")
+        return RedirectResponse(url="/console")
 
     @app.get("/docs", include_in_schema=False)
     async def docs_redirect():
