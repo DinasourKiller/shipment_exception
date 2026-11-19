@@ -30,6 +30,7 @@ from app.core.logging import (
     set_correlation_id,
     setup_logging,
 )
+from app.database.connection import check_database_health
 
 settings = get_settings()
 logger = get_logger("control_tower.main")
@@ -69,6 +70,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         f"Starting {settings.APP_NAME} v{settings.APP_VERSION} "
         f"[Environment: {settings.ENVIRONMENT}, Debug: {settings.DEBUG}]"
     )
+
+    # Test database connectivity
+    db_healthy, db_detail = await check_database_health()
+    if db_healthy:
+        logger.info("Database connection established successfully.")
+    else:
+        logger.warning(f"Database connection warning on startup: {db_detail}")
 
     yield
 
@@ -122,15 +130,18 @@ def create_application() -> FastAPI:
         summary="Comprehensive system health check",
     )
     async def health_check() -> ApiResponse[HealthStatus]:
+        db_healthy, db_detail = await check_database_health()
+        overall_status = "healthy" if db_healthy else "degraded"
+
         payload = HealthStatus(
-            status="healthy",
+            status=overall_status,
             timestamp=datetime.now(timezone.utc).isoformat(),
             app_name=settings.APP_NAME,
             version=settings.APP_VERSION,
             environment=settings.ENVIRONMENT,
             components={
                 "api": "healthy",
-                "database": "configured",
+                "database": "healthy" if db_healthy else f"unhealthy: {db_detail}",
                 "mendix_adapter": "configured",
                 "ai_provider": "configured",
             },
@@ -156,8 +167,11 @@ def create_application() -> FastAPI:
         tags=["System Diagnostics"],
         summary="Kubernetes / Docker Readiness probe",
     )
-    async def readiness_probe() -> dict[str, str]:
-        # Ready checks can inspect database connectivity in Phase 2
+    async def readiness_probe(response: Response) -> dict[str, str]:
+        db_healthy, db_detail = await check_database_health()
+        if not db_healthy:
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return {"status": "unhealthy", "reason": f"Database unavailable: {db_detail}"}
         return {"status": "ready"}
 
     @app.get(

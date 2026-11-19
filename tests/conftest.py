@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
 from app.config import Settings, get_settings
+from app.database.connection import async_engine
 from app.main import app
 
 
@@ -27,3 +28,10 @@ async def async_client() -> AsyncClient:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         yield ac
+
+
+@pytest.fixture(autouse=True)
+async def cleanup_db_engine():
+    """Clean up connection pool across test event loops."""
+    yield
+    await async_engine.dispose()

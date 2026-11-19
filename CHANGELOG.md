@@ -4,6 +4,18 @@ All notable changes to the Shipment Exception Control Tower project will be docu
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-19
+### Added
+- **PHASE 2 - Database Foundation:**
+  - Configured SQLAlchemy 2.x asynchronous engine with connection pooling and `pool_pre_ping`.
+  - Implemented `app/database/connection.py` providing `get_db_session()` async generator and `check_database_health()`.
+  - Implemented `app/database/base.py` declarative `Base`, `UUIDPrimaryKeyMixin` (UUIDv4), and `TimestampMixin` (timezone-aware UTC `created_at` and `updated_at`).
+  - Configured Alembic with `alembic.ini` and `app/database/migrations/env.py` for asynchronous migrations.
+  - Updated `/health` and `/health/ready` endpoints in `app/main.py` with live PostgreSQL health checks and readiness probes.
+  - Added unit tests for database base and mixins (`tests/unit/test_database_base.py`).
+  - Added integration tests for async session lifecycle, queries, and rollbacks (`tests/integration/test_database_session.py`).
+  - Verified 16/16 automated tests passing against live PostgreSQL database.
+
 ## [0.1.0] - 2026-11-18
 ### Added
 - **PHASE 1 - Project Foundation:**

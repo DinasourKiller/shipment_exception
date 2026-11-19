@@ -13,7 +13,7 @@ def test_health_endpoint(client: TestClient):
     assert data["success"] is True
     assert data["data"]["status"] == "healthy"
     assert data["data"]["app_name"] == "Shipment Exception Control Tower"
-    assert "components" in data["data"]
+    assert data["data"]["components"]["database"] == "healthy"
     assert CORRELATION_ID_HEADER in response.headers
 
 
