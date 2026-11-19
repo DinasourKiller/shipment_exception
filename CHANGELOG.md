@@ -4,6 +4,24 @@ All notable changes to the Shipment Exception Control Tower project will be docu
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-19
+### Added
+- **PHASE 7 - Shipment Management:**
+  - Implemented `app/modules/shipments/models.py`: PostgreSQL models for `Shipment`, `ShipmentParty`, `CargoItem`, and `ShipmentMilestone` with indexes, JSONB metadata, and cascade relationships.
+  - Generated and applied Alembic migration `79c9a6522ec2_create_shipments_tables.py` creating the shipment domain tables in PostgreSQL.
+  - Implemented `app/modules/shipments/schemas.py`: Pydantic request/response models (`ShipmentDetailResponse`, `ShipmentListResponse`, `ShipmentSummaryResponse`, `ShipmentStatusUpdateRequest`, `ShipmentSyncResponse`).
+  - Implemented `app/modules/shipments/repository.py`: Complex queries with pagination, dynamic filters (status, carrier, mode, origin, destination, date range), substring search across reference numbers, and idempotent `upsert_canonical_shipment()`.
+  - Implemented `app/modules/shipments/service.py`: Operational state machine validation (`validate_status_transition`), on-demand single shipment ingestion from Mendix, and batch ingestion synchronization.
+  - Implemented `app/modules/shipments/router.py`:
+    - `GET /api/v1/shipments`: Filtered and paginated shipment listing (requires `shipments:read`).
+    - `GET /api/v1/shipments/{shipment_id}`: Detailed shipment inspection (requires `shipments:read`).
+    - `POST /api/v1/shipments/sync/{external_reference}`: On-demand sync from Mendix (requires `shipments:write`).
+    - `POST /api/v1/shipments/sync`: Batch synchronization of updated shipments from Mendix (requires `shipments:write`).
+    - `PATCH /api/v1/shipments/{shipment_id}/status`: State machine validated lifecycle transition (requires `shipments:write`).
+  - Added unit tests for state machine transition enforcement (`tests/unit/test_shipments_service.py`).
+  - Added end-to-end integration tests (`tests/integration/test_shipments_api.py`) covering ingestion, idempotent upsert, search, filters, state transitions, and RBAC guards.
+  - Verified 93/93 automated tests passing across the entire project suite.
+
 ## [0.6.0] - 2026-11-19
 ### Added
 - **PHASE 6 - Integration Foundation & Mendix Adapter:**

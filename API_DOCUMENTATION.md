@@ -85,4 +85,14 @@
 | `GET` | `/api/v1/mock/mendix/shipments` | `X-API-Key` | Simulates Mendix batch shipment polling (`updatedSince`, `limit`). |
 | `POST` | `/api/v1/mock/mendix/shipments/{ref}/exceptions` | `X-API-Key` | Simulates Mendix receiving operational exception notifications and recovery actions. |
 
+## Shipment Management Endpoints (Phase 7)
+
+| Method | Endpoint | Required Permission | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/shipments` | `shipments:read` | Paginated list of shipments with search (`search`), filters (`status`, `carrier_code`, `transport_mode`, `origin_city`, `destination_city`, date range). |
+| `GET` | `/api/v1/shipments/{shipment_id}` | `shipments:read` | Full detailed shipment profile including parties, cargo items, and milestones. |
+| `POST` | `/api/v1/shipments/sync/{external_reference}` | `shipments:write` | Ingests or synchronizes a single shipment on-demand from Mendix into PostgreSQL. |
+| `POST` | `/api/v1/shipments/sync` | `shipments:write` | Triggers batch polling synchronization of updated shipments from Mendix. |
+| `PATCH` | `/api/v1/shipments/{shipment_id}/status` | `shipments:write` | Transitions operational lifecycle status with state machine enforcement. |
+
 *Domain endpoints will be documented as their respective phases are implemented.*

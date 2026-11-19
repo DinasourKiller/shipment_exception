@@ -35,6 +35,7 @@ from app.database.connection import check_database_health
 from app.integrations.mendix.sandbox import sandbox_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.roles.router import router as roles_router
+from app.modules.shipments.router import router as shipments_router
 from app.modules.users.router import router as users_router
 
 settings = get_settings()
@@ -105,6 +106,10 @@ OPENAPI_TAGS = [
     {
         "name": "User Management",
         "description": "User CRUD, paginated search and filtering, status toggling with immediate session invalidation, and password resets.",
+    },
+    {
+        "name": "Shipment Management",
+        "description": "Shipment operational records, Mendix ingestion pipeline, tracking milestones, and status lifecycle management.",
     },
     {
         "name": "Mendix Sandbox",
@@ -262,6 +267,11 @@ def create_application() -> FastAPI:
         users_router,
         prefix=f"{settings.API_V1_PREFIX}/users",
         tags=["User Management"],
+    )
+    app.include_router(
+        shipments_router,
+        prefix=f"{settings.API_V1_PREFIX}/shipments",
+        tags=["Shipment Management"],
     )
     app.include_router(
         sandbox_router,

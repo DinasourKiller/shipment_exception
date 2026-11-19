@@ -13,6 +13,7 @@ from app.database.base import Base
 # Import all models to ensure they are registered with Base.metadata
 from app.modules.authentication.models import LoginAttempt, RefreshToken, User
 from app.modules.roles.models import Permission, Role, role_permissions, user_roles
+from app.modules.shipments.models import CargoItem, Shipment, ShipmentMilestone, ShipmentParty
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

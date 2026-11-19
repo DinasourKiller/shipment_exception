@@ -91,6 +91,18 @@ class BusinessRuleViolationException(AppException):
         )
 
 
+class ValidationException(AppException):
+    """Raised when an operation or payload fails domain validation."""
+
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            code="VALIDATION_ERROR",
+            details=details,
+        )
+
+
 class IntegrationException(AppException):
     """Raised when an external integration (e.g. Mendix, SAP) fails or times out."""
 
