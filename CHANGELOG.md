@@ -4,6 +4,36 @@ All notable changes to the Shipment Exception Control Tower project will be docu
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-19
+### Added
+- **PHASE 9 - Exception Management & Anomaly Detection:**
+  - Implemented `app/modules/exceptions/models.py`: PostgreSQL models `ShipmentException` and `ExceptionAuditLog` with structured enums (`ExceptionType`, `ExceptionSeverity`, `ExceptionStatus`, `ExceptionAction`), foreign keys to shipments and users, and composite indexes for SLA tracking and query filtering.
+  - Generated and applied Alembic migration `8dbe0a868714_create_exceptions_tables.py` creating `shipment_exceptions` and `exception_audit_logs` tables in PostgreSQL.
+  - Implemented `app/modules/exceptions/schemas.py`: Pydantic request and response models (`ExceptionCreateRequest`, `ExceptionStatusUpdateRequest`, `ExceptionAssignRequest`, `ExceptionEscalateRequest`, `ExceptionResolveRequest`, `ExceptionCloseRequest`, `ExceptionResponse`, `ExceptionAuditLogResponse`, `PaginatedExceptionResponse`).
+  - Implemented `app/modules/exceptions/repository.py`: Multi-dimensional filtering, pagination, text search joining shipments, audit log append logic, and automated background SLA breach identification (`check_and_mark_sla_breaches()`).
+  - Implemented `app/modules/exceptions/service.py`:
+    - Strict state machine transition validation (`OPEN` -> `INVESTIGATING` -> `ESCALATED` -> `RESOLVING` -> `RESOLVED` -> `CLOSED`).
+    - Dynamic SLA deadline computation based on impact severity (Critical: 2h, High: 4h, Medium: 12h, Low: 24h).
+    - Operator assignment and severity escalation with SLA window compression.
+    - Resolution workflow requiring structured root cause and recovery documentation.
+    - Automated Anomaly Detection: milestone delay threshold engine and telemetry silence communication loss detection.
+    - Two-way upstream synchronization with Mendix REST adapter.
+  - Implemented `app/modules/exceptions/router.py`:
+    - `POST /api/v1/exceptions`: Log new shipment exception (requires `exceptions:manage`).
+    - `GET /api/v1/exceptions`: Paginated exceptions listing with filtering on status, severity, type, SLA breach, and keyword search (requires `exceptions:read`).
+    - `GET /api/v1/exceptions/{exception_id}`: Detail inspection with chronological audit trail (requires `exceptions:read`).
+    - `GET /api/v1/exceptions/shipment/{shipment_id}`: All exceptions linked to a shipment (requires `exceptions:read`).
+    - `PATCH /api/v1/exceptions/{exception_id}/status`: State machine validated lifecycle transition (requires `exceptions:manage`).
+    - `POST /api/v1/exceptions/{exception_id}/assign`: Assign exception to operator (requires `exceptions:manage`).
+    - `POST /api/v1/exceptions/{exception_id}/escalate`: Escalate priority and severity (requires `exceptions:escalate`).
+    - `POST /api/v1/exceptions/{exception_id}/resolve`: Resolve with root cause (requires `exceptions:manage`).
+    - `POST /api/v1/exceptions/{exception_id}/close`: Formally close exception (requires `exceptions:close`).
+    - `POST /api/v1/exceptions/detect-anomalies/{shipment_id}`: Automated anomaly detection execution (requires `exceptions:manage`).
+  - Integrated Phase 9 into the Web Testing Console (`app/static/index.html`): Added dedicated "Exceptions & Anomalies" tab with live table, anomaly runner, escalation, resolution, and audit trail inspection.
+  - Added unit test suite (`tests/unit/test_exceptions_service.py`) covering SLA calculations, state machine transitions, escalation, resolution, and milestone anomaly rules.
+  - Added integration test suite (`tests/integration/test_exceptions_api.py`) covering complete exception lifecycle, RBAC enforcement, search/filtering, and anomaly detection endpoints.
+  - Verified 117/117 automated tests passing across the entire project suite.
+
 ## [0.8.0] - 2026-11-19
 ### Added
 - **PHASE 8 - Tracking & Milestones:**

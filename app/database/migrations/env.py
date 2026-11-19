@@ -15,6 +15,7 @@ from app.modules.authentication.models import LoginAttempt, RefreshToken, User
 from app.modules.roles.models import Permission, Role, role_permissions, user_roles
 from app.modules.shipments.models import CargoItem, Shipment, ShipmentMilestone, ShipmentParty
 from app.modules.tracking.models import TrackingEvent
+from app.modules.exceptions.models import ExceptionAuditLog, ShipmentException
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -105,4 +105,19 @@
 | `PATCH` | `/api/v1/tracking/milestones/{milestone_id}` | `shipments:write` | Manually updates milestone status (`COMPLETED`, `DELAYED`, etc.) and recalculates delivery ETA. |
 | `POST` | `/api/v1/tracking/{shipment_id}/recalculate-eta` | `shipments:write` | Performs dynamic delivery ETA projection based on transit milestone delays. |
 
+## Exception Management Endpoints (Phase 9)
+
+| Method | Endpoint | Required Permission | Description |
+|---|---|---|---|
+| `POST` | `/api/v1/exceptions` | `exceptions:manage` | Logs a new shipment exception with automated SLA deadline computation and Mendix synchronization. |
+| `GET` | `/api/v1/exceptions` | `exceptions:read` | Paginated listing of exceptions with multi-dimensional filtering (`status`, `severity`, `exception_type`, `is_sla_breached`, `search`). |
+| `GET` | `/api/v1/exceptions/{exception_id}` | `exceptions:read` | Inspects a single exception with its chronological audit log trail and affected shipment summary. |
+| `GET` | `/api/v1/exceptions/shipment/{shipment_id}` | `exceptions:read` | Retrieves all active and resolved exceptions linked to a specific shipment. |
+| `PATCH` | `/api/v1/exceptions/{exception_id}/status` | `exceptions:manage` | Transitions lifecycle state (`OPEN`, `INVESTIGATING`, `ESCALATED`, `RESOLVING`, `RESOLVED`, `CLOSED`) with state machine validation. |
+| `POST` | `/api/v1/exceptions/{exception_id}/assign` | `exceptions:manage` | Assigns or reassigns an exception to an operator user with audit logging. |
+| `POST` | `/api/v1/exceptions/{exception_id}/escalate` | `exceptions:escalate` | Elevates exception impact level (e.g. to `CRITICAL`), tightens resolution SLA window, and notifies managers. |
+| `POST` | `/api/v1/exceptions/{exception_id}/resolve` | `exceptions:manage` | Resolves an exception with mandatory root cause classification and recovery action notes. |
+| `POST` | `/api/v1/exceptions/{exception_id}/close` | `exceptions:close` | Closes an exception permanently into terminal status. |
+| `POST` | `/api/v1/exceptions/detect-anomalies/{shipment_id}` | `exceptions:manage` | Executes automated anomaly detection engines against milestones and telemetry pings for a shipment. |
+
 *Domain endpoints will be documented as their respective phases are implemented.*

@@ -35,6 +35,7 @@ from app.core.logging import (
 from app.database.connection import check_database_health
 from app.integrations.mendix.sandbox import sandbox_router
 from app.modules.authentication.router import router as auth_router
+from app.modules.exceptions.router import router as exceptions_router
 from app.modules.roles.router import router as roles_router
 from app.modules.shipments.router import router as shipments_router
 from app.modules.tracking.router import router as tracking_router
@@ -283,6 +284,11 @@ def create_application() -> FastAPI:
         tracking_router,
         prefix=f"{settings.API_V1_PREFIX}/tracking",
         tags=["Tracking & Milestones"],
+    )
+    app.include_router(
+        exceptions_router,
+        prefix=f"{settings.API_V1_PREFIX}/exceptions",
+        tags=["Exception Management"],
     )
     app.include_router(
         sandbox_router,

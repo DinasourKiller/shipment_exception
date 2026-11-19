@@ -27,7 +27,7 @@
           Shipment Exception Control Tower
           <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Testing Console</span>
         </h1>
-        <p class="text-xs text-slate-400">Interactive Web Harness (Phases 1–8)</p>
+        <p class="text-xs text-slate-400">Interactive Web Harness (Phases 1–9)</p>
       </div>
     </div>
 
@@ -55,20 +55,23 @@
   </header>
 
   <!-- Secondary Tab Navigation -->
-  <nav class="bg-slate-950/60 border-b border-slate-800 px-6 flex gap-6 text-sm">
-    <button onclick="switchTab('auth')" id="nav-auth" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition tab-active flex items-center gap-2">
+  <nav class="bg-slate-950/60 border-b border-slate-800 px-6 flex gap-6 text-sm overflow-x-auto">
+    <button onclick="switchTab('auth')" id="nav-auth" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition tab-active flex items-center gap-2 whitespace-nowrap">
       <span>🔑</span> Auth & Roles
     </button>
-    <button onclick="switchTab('shipments')" id="nav-shipments" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+    <button onclick="switchTab('shipments')" id="nav-shipments" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>📦</span> Shipments & Ingestion
     </button>
-    <button onclick="switchTab('tracking')" id="nav-tracking" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+    <button onclick="switchTab('tracking')" id="nav-tracking" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>🧭</span> Tracking & ETA Engine
     </button>
-    <button onclick="switchTab('users')" id="nav-users" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+    <button onclick="switchTab('exceptions')" id="nav-exceptions" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+      <span>🚨</span> Exceptions & Anomalies
+    </button>
+    <button onclick="switchTab('users')" id="nav-users" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>👥</span> Users & RBAC
     </button>
-    <button onclick="switchTab('diagnostics')" id="nav-diagnostics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+    <button onclick="switchTab('diagnostics')" id="nav-diagnostics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>⚡</span> System Diagnostics
     </button>
   </nav>
@@ -322,7 +325,72 @@
       </div>
     </section>
 
-    <!-- TAB 4: USERS & RBAC -->
+    <!-- TAB 4: EXCEPTIONS & ANOMALIES (PHASE 9) -->
+    <section id="tab-exceptions" class="space-y-6 hidden">
+      <!-- Actions Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl">
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="runAnomalyDetectionForSelected()" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+            <span>🔍</span> Run Anomaly Detection
+          </button>
+          <button onclick="loadExceptions()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition flex items-center gap-1.5">
+            <span>🔄</span> Refresh Exceptions
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <input type="text" id="exception-search" oninput="loadExceptions()" placeholder="Search Exceptions..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
+          <select id="exception-filter-status" onchange="loadExceptions()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+            <option value="">All Statuses</option>
+            <option value="OPEN">OPEN</option>
+            <option value="INVESTIGATING">INVESTIGATING</option>
+            <option value="ESCALATED">ESCALATED</option>
+            <option value="RESOLVING">RESOLVING</option>
+            <option value="RESOLVED">RESOLVED</option>
+            <option value="CLOSED">CLOSED</option>
+          </select>
+          <select id="exception-filter-severity" onchange="loadExceptions()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+            <option value="">All Severities</option>
+            <option value="CRITICAL">CRITICAL</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Exceptions Table -->
+      <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700/60">
+              <tr>
+                <th class="py-3 px-4">Disruption Title & Type</th>
+                <th class="py-3 px-4">Shipment</th>
+                <th class="py-3 px-4">Severity</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">SLA Deadline</th>
+                <th class="py-3 px-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="exceptions-tbody" class="divide-y divide-slate-800">
+              <tr><td colspan="6" class="py-6 text-center text-slate-500">No exceptions recorded. Click "Run Anomaly Detection" or log one via API.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Audit History Modal / Container -->
+      <div id="exception-audit-panel" class="hidden bg-slate-800/60 border border-slate-700/60 rounded-xl p-5 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+          <h3 id="audit-panel-title" class="text-sm font-semibold text-white">Exception Audit Trail</h3>
+          <button onclick="document.getElementById('exception-audit-panel').classList.add('hidden')" class="text-slate-400 hover:text-white text-xs">✕ Close</button>
+        </div>
+        <div id="audit-panel-content" class="space-y-2 text-xs"></div>
+      </div>
+    </section>
+
+    <!-- TAB 5: USERS & RBAC -->
     <section id="tab-users" class="space-y-6 hidden">
       <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden">
         <div class="p-4 border-b border-slate-700/60 flex items-center justify-between">
@@ -448,7 +516,7 @@
 
     // Tab Switching
     function switchTab(tab) {
-      ['auth', 'shipments', 'tracking', 'users', 'diagnostics'].forEach(t => {
+      ['auth', 'shipments', 'tracking', 'exceptions', 'users', 'diagnostics'].forEach(t => {
         document.getElementById(`tab-${t}`).classList.add('hidden');
         document.getElementById(`nav-${t}`).classList.remove('tab-active');
       });
@@ -457,6 +525,7 @@
 
       if (tab === 'shipments') loadShipments();
       if (tab === 'tracking') populateTrackingDropdown();
+      if (tab === 'exceptions') loadExceptions();
       if (tab === 'users') loadUsers();
       if (tab === 'diagnostics') checkHealth();
     }
@@ -865,7 +934,186 @@
       }
     }
 
-    // TAB 4: Users & RBAC
+    // TAB 4: Exceptions & Anomalies (Phase 9)
+    async function loadExceptions() {
+      if (!currentToken) return;
+      const search = document.getElementById("exception-search")?.value || "";
+      const statusFilter = document.getElementById("exception-filter-status")?.value || "";
+      const severityFilter = document.getElementById("exception-filter-severity")?.value || "";
+
+      let url = "/api/v1/exceptions?page=1&page_size=30";
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (statusFilter) url += `&status=${encodeURIComponent(statusFilter)}`;
+      if (severityFilter) url += `&severity=${encodeURIComponent(severityFilter)}`;
+
+      try {
+        const resp = await authFetch(url);
+        const json = await resp.json();
+        const tbody = document.getElementById("exceptions-tbody");
+        if (resp.ok && json.success) {
+          if (json.data.items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No matching exceptions found. Click "Run Anomaly Detection" to test.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = json.data.items.map(e => {
+            const sevColor = e.severity === 'CRITICAL' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                             e.severity === 'HIGH' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                             e.severity === 'MEDIUM' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                             'bg-slate-500/10 text-slate-400 border-slate-500/20';
+            
+            const statColor = e.status === 'RESOLVED' || e.status === 'CLOSED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                              e.status === 'ESCALATED' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20 font-bold' :
+                              'bg-blue-500/10 text-blue-400 border-blue-500/20';
+
+            const slaTag = e.is_sla_breached
+              ? '<span class="px-1.5 py-0.5 rounded text-[10px] bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">BREACHED</span>'
+              : `<span class="text-[11px] text-slate-400 font-mono">${formatDate(e.sla_breach_at)}</span>`;
+
+            const shipRef = e.shipment ? `${e.shipment.external_reference} (${e.shipment.carrier_code})` : 'N/A';
+
+            return `
+              <tr class="hover:bg-slate-800/40 transition">
+                <td class="py-3 px-4">
+                  <div class="font-medium text-white">${e.title}</div>
+                  <div class="text-[10px] text-slate-500 font-mono">${e.exception_type}</div>
+                </td>
+                <td class="py-3 px-4 font-mono text-slate-300">${shipRef}</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded border text-[10px] font-semibold ${sevColor}">${e.severity}</span>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded border text-[10px] ${statColor}">${e.status}</span>
+                </td>
+                <td class="py-3 px-4">${slaTag}</td>
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-1.5">
+                    <button onclick="viewExceptionAudit('${e.id}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700 transition">Audit</button>
+                    ${e.status !== 'CLOSED' && e.status !== 'RESOLVED' ? `
+                      <button onclick="escalateExceptionAction('${e.id}')" class="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] border border-rose-500/20 transition">Escalate</button>
+                      <button onclick="resolveExceptionAction('${e.id}')" class="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/20 transition">Resolve</button>
+                    ` : ''}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join("");
+        }
+      } catch (err) {
+        showToast("Error loading exceptions: " + err.message, "error");
+      }
+    }
+
+    async function runAnomalyDetectionForSelected() {
+      const select = document.getElementById("tracking-shipment-select");
+      let shipmentId = select ? select.value : "";
+      if (!shipmentId) {
+        try {
+          const resp = await authFetch("/api/v1/shipments?page=1&page_size=1");
+          const json = await resp.json();
+          if (json.data && json.data.items.length > 0) {
+            shipmentId = json.data.items[0].id;
+          }
+        } catch(e){}
+      }
+
+      if (!shipmentId) {
+        showToast("Please sync a shipment first from Shipments tab", "warning");
+        return;
+      }
+
+      showToast("Running automated anomaly detection...", "info");
+      try {
+        const resp = await authFetch(`/api/v1/exceptions/detect-anomalies/${shipmentId}?delay_threshold=30`, { method: "POST" });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          showToast(json.message, "success");
+          loadExceptions();
+        } else {
+          showToast(json.error?.message || "Anomaly detection failed", "error");
+        }
+      } catch(err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    async function escalateExceptionAction(id) {
+      const reason = prompt("Enter escalation reason (e.g. SLA breach imminent):", "SLA risk - prioritize recovery");
+      if (!reason) return;
+
+      try {
+        const resp = await authFetch(`/api/v1/exceptions/${id}/escalate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ severity: "CRITICAL", reason: reason }),
+        });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          showToast("Exception escalated to CRITICAL", "warning");
+          loadExceptions();
+        } else {
+          showToast(json.error?.message || "Escalation failed", "error");
+        }
+      } catch(err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    async function resolveExceptionAction(id) {
+      const rootCause = prompt("Enter root cause classification:", "Carrier mechanical breakdown / Traffic delay");
+      if (!rootCause) return;
+      const notes = prompt("Enter resolution summary:", "Alternate route taken; driver resumed transit.");
+      if (!notes) return;
+
+      try {
+        const resp = await authFetch(`/api/v1/exceptions/${id}/resolve`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ root_cause: rootCause, resolution_notes: notes }),
+        });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          showToast("Exception successfully resolved", "success");
+          loadExceptions();
+        } else {
+          showToast(json.error?.message || "Resolution failed", "error");
+        }
+      } catch(err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    async function viewExceptionAudit(id) {
+      try {
+        const resp = await authFetch(`/api/v1/exceptions/${id}`);
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          const exc = json.data;
+          const panel = document.getElementById("exception-audit-panel");
+          const title = document.getElementById("audit-panel-title");
+          const content = document.getElementById("audit-panel-content");
+
+          title.textContent = `Audit Trail: ${exc.title} (${exc.exception_type})`;
+          content.innerHTML = (exc.audit_logs || []).map(a => `
+            <div class="p-3 bg-slate-900 rounded-lg border border-slate-800 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-blue-400 font-mono text-[11px]">${a.action}</span>
+                <span class="text-slate-500 font-mono text-[10px]">${formatDate(a.created_at)}</span>
+              </div>
+              <div class="text-slate-300 text-[11px]">${a.comment || 'No comment recorded'}</div>
+              ${a.actor ? `<div class="text-[10px] text-slate-500">Actor: ${a.actor.full_name} (${a.actor.email})</div>` : '<div class="text-[10px] text-slate-500">Actor: Automated Control Tower Engine</div>'}
+            </div>
+          `).join("");
+
+          panel.classList.remove("hidden");
+          panel.scrollIntoView({ behavior: 'smooth' });
+        }
+      } catch(err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    // TAB 5: Users & RBAC
     async function loadUsers() {
       if (!currentToken) return;
       const search = document.getElementById("user-search")?.value || "";
