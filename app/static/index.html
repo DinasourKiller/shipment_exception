@@ -40,7 +40,7 @@
 
       <!-- Auth profile chip -->
       <div id="user-chip" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs">
-        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+        <span class="text-slate-400">👤</span>
         <div class="text-left">
           <div id="user-chip-name" class="font-medium text-slate-200">Not Logged In</div>
           <div id="user-chip-role" class="text-[10px] text-slate-400">Guest</div>
@@ -48,7 +48,7 @@
       </div>
 
       <a href="/docs" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-medium text-slate-300 flex items-center gap-1.5 transition">
-        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+        <span>↗</span>
         Swagger Docs
       </a>
     </div>
@@ -57,19 +57,19 @@
   <!-- Secondary Tab Navigation -->
   <nav class="bg-slate-950/60 border-b border-slate-800 px-6 flex gap-6 text-sm">
     <button onclick="switchTab('auth')" id="nav-auth" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition tab-active flex items-center gap-2">
-      <i data-lucide="key" class="w-4 h-4"></i> Auth & Roles
+      <span>🔑</span> Auth & Roles
     </button>
     <button onclick="switchTab('shipments')" id="nav-shipments" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
-      <i data-lucide="package" class="w-4 h-4"></i> Shipments & Ingestion
+      <span>📦</span> Shipments & Ingestion
     </button>
     <button onclick="switchTab('tracking')" id="nav-tracking" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
-      <i data-lucide="navigation" class="w-4 h-4"></i> Tracking & ETA Engine
+      <span>🧭</span> Tracking & ETA Engine
     </button>
     <button onclick="switchTab('users')" id="nav-users" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
-      <i data-lucide="users" class="w-4 h-4"></i> Users & RBAC
+      <span>👥</span> Users & RBAC
     </button>
     <button onclick="switchTab('diagnostics')" id="nav-diagnostics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
-      <i data-lucide="activity" class="w-4 h-4"></i> System Diagnostics
+      <span>⚡</span> System Diagnostics
     </button>
   </nav>
 
@@ -85,12 +85,68 @@
             <p class="text-xs text-slate-400">Click any card below to instantly authenticate as that role and acquire an RS256 JWT access token.</p>
           </div>
           <button onclick="logout()" class="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-medium transition flex items-center gap-1.5">
-            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
+            <span>🚪</span> Logout
           </button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" id="demo-users-grid">
-          <!-- Populated by JavaScript -->
+          <!-- Pre-rendered for instant visibility -->
+          <div onclick="loginAs('admin@controltower.corp')" class="p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/60 hover:border-blue-500/50 cursor-pointer transition shadow-sm group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">👑 System Admin</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">Admin</span>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">admin@controltower.corp</div>
+            <div class="text-[10px] text-slate-500 mt-1">Unrestricted master access</div>
+          </div>
+          <div onclick="loginAs('analyst@controltower.corp')" class="p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/60 hover:border-blue-500/50 cursor-pointer transition shadow-sm group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">📊 Tower Analyst</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">Analyst</span>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">analyst@controltower.corp</div>
+            <div class="text-[10px] text-slate-500 mt-1">Shipments, Exceptions & Analytics</div>
+          </div>
+          <div onclick="loginAs('dispatcher@controltower.corp')" class="p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/60 hover:border-blue-500/50 cursor-pointer transition shadow-sm group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">🚦 Dispatcher / Planner</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">Dispatcher</span>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">dispatcher@controltower.corp</div>
+            <div class="text-[10px] text-slate-500 mt-1">Shipments & Milestone Dispatch</div>
+          </div>
+          <div onclick="loginAs('manager@controltower.corp')" class="p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/60 hover:border-blue-500/50 cursor-pointer transition shadow-sm group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">💼 Operations Manager</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">Manager</span>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">manager@controltower.corp</div>
+            <div class="text-[10px] text-slate-500 mt-1">Full Operational Management</div>
+          </div>
+          <div onclick="loginAs('carrier@controltower.corp')" class="p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/60 hover:border-blue-500/50 cursor-pointer transition shadow-sm group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">🚚 Carrier Rep</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold">Carrier</span>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">carrier@controltower.corp</div>
+            <div class="text-[10px] text-slate-500 mt-1">Carrier Tracking & Responses</div>
+          </div>
+          <div onclick="loginAs('warehouse@controltower.corp')" class="p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/60 hover:border-blue-500/50 cursor-pointer transition shadow-sm group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">🏭 Hub Supervisor</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">Hub</span>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">warehouse@controltower.corp</div>
+            <div class="text-[10px] text-slate-500 mt-1">Dock & Milestone Execution</div>
+          </div>
+          <div onclick="loginAs('support@controltower.corp')" class="p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/60 hover:border-blue-500/50 cursor-pointer transition shadow-sm group">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">🎧 Customer Support</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">Support</span>
+            </div>
+            <div class="text-[11px] text-slate-400 font-mono">support@controltower.corp</div>
+            <div class="text-[10px] text-slate-500 mt-1">Tracking Visibility</div>
+          </div>
         </div>
       </div>
 
@@ -353,15 +409,36 @@
     let currentToken = localStorage.getItem("ct_token") || null;
     let currentUser = JSON.parse(localStorage.getItem("ct_user") || "null");
 
-    // Initialize UI
-    window.addEventListener("DOMContentLoaded", () => {
-      lucide.createIcons();
-      renderDemoAccounts();
-      updateUserChip();
-      checkHealth();
-      if (currentToken) {
-        loadShipments();
+    function safeRenderIcons() {
+      try {
+        if (typeof lucide !== 'undefined' && lucide && typeof lucide.createIcons === 'function') {
+          lucide.createIcons();
+        }
+      } catch (e) {
+        console.warn("Lucide icons warning:", e);
       }
+    }
+
+    // Initialize UI
+    function initConsole() {
+      try { safeRenderIcons(); } catch (e) { console.error("safeRenderIcons error", e); }
+      try { renderDemoAccounts(); } catch (e) { console.error("renderDemoAccounts error", e); }
+      try { updateUserChip(); } catch (e) { console.error("updateUserChip error", e); }
+      try { checkHealth(); } catch (e) { console.error("checkHealth error", e); }
+      try {
+        if (currentToken) {
+          loadShipments();
+        }
+      } catch (e) { console.error("loadShipments error", e); }
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initConsole);
+    } else {
+      initConsole();
+    }
+    window.addEventListener("load", () => {
+      safeRenderIcons();
     });
 
     // Tab Switching
@@ -382,11 +459,21 @@
     // Render Demo Accounts
     function renderDemoAccounts() {
       const grid = document.getElementById("demo-users-grid");
+      if (!grid) return;
+      const icons = {
+        "admin@controltower.corp": "👑",
+        "analyst@controltower.corp": "📊",
+        "dispatcher@controltower.corp": "🚦",
+        "manager@controltower.corp": "💼",
+        "carrier@controltower.corp": "🚚",
+        "warehouse@controltower.corp": "🏭",
+        "support@controltower.corp": "🎧",
+      };
       grid.innerHTML = DEMO_ACCOUNTS.map(u => `
         <div onclick="loginAs('${u.email}')" class="p-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/60 hover:border-blue-500/50 cursor-pointer transition shadow-sm group">
           <div class="flex items-center justify-between mb-1">
-            <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">${u.name}</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">${u.role.split(' ')[0]}</span>
+            <span class="font-medium text-xs text-white group-hover:text-blue-400 transition">${icons[u.email] || "👤"} ${u.name}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">${u.role.split(' ')[0]}</span>
           </div>
           <div class="text-[11px] text-slate-400 font-mono">${u.email}</div>
           <div class="text-[10px] text-slate-500 mt-1">${u.desc}</div>
@@ -452,7 +539,7 @@
         roleEl.textContent = "Guest";
         sessionInfo.innerHTML = `<p class="text-slate-500">No active token in local session. Please select a user above to authenticate.</p>`;
       }
-      lucide.createIcons();
+      safeRenderIcons();
     }
 
     // Helper for Authenticated Fetch
@@ -640,7 +727,7 @@
               </div>
             `).join("");
 
-          lucide.createIcons();
+          safeRenderIcons();
         }
       } catch (err) {
         showToast("Error loading timeline: " + err.message, "error");
