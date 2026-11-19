@@ -72,8 +72,17 @@
 | `POST` | `/api/v1/users` | `users:manage` | Creates a new user with optional role assignments, phone number, and Argon2id hashed password. |
 | `GET` | `/api/v1/users/{user_id}` | `users:read` | Retrieves full profile and assigned roles for a specific user. |
 | `PUT` | `/api/v1/users/{user_id}` | `users:manage` | Updates profile details (full name, phone number). |
-| `PUT` | `/api/v1/users/{user_id}/status` | `users:manage` | Activates or deactivates user account. Deactivation immediately invalidates all active sessions/refresh tokens. |
+| `PATCH` | `/api/v1/users/{user_id}/status` | `users:manage` | Activates or deactivates user account. Deactivation immediately invalidates all active sessions/refresh tokens. |
 | `PUT` | `/api/v1/users/{user_id}/roles` | `users:manage` | Synchronizes user roles (replaces existing assignments with provided set). |
 | `POST` | `/api/v1/users/{user_id}/reset-password` | `users:manage` | Administrative password reset. Updates password and revokes all active user sessions. |
+
+## Mendix Sandbox & Integration Simulation Endpoints (Phase 6)
+
+| Method | Endpoint | Auth Required | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/mock/mendix/health` | None | Simulates Mendix REST API health check. |
+| `GET` | `/api/v1/mock/mendix/shipments/{ref}` | `X-API-Key` | Simulates Mendix single shipment retrieval by external reference ID. |
+| `GET` | `/api/v1/mock/mendix/shipments` | `X-API-Key` | Simulates Mendix batch shipment polling (`updatedSince`, `limit`). |
+| `POST` | `/api/v1/mock/mendix/shipments/{ref}/exceptions` | `X-API-Key` | Simulates Mendix receiving operational exception notifications and recovery actions. |
 
 *Domain endpoints will be documented as their respective phases are implemented.*

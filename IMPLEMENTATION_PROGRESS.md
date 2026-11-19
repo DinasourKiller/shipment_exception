@@ -7,7 +7,7 @@
 | **Phase 3** | Authentication (JWT, Refresh Token Rotation, Argon2id) | **Completed** | 2026-11-19 | User & RefreshToken entities, Argon2id hashing, RS256 JWT, opaque token single-use rotation with reuse detection, lockout policy, login/refresh/logout/me APIs, Alembic migration applied to PostgreSQL, 27/27 tests passing. |
 | **Phase 4** | Authorization & RBAC | **Completed** | 2026-11-19 | Role, Permission, user_roles, role_permissions entities, Alembic migration fbe3df102447, seed script (19 permissions, 7 enterprise roles), require_permissions and require_roles guards, System Admin bypass, roles router, 35/35 tests passing. |
 | **Phase 5** | User Management | **Completed** | 2026-11-19 | User CRUD schemas, repository, service, and router; pagination, search, role-based filtering, status toggle with session revocation, role sync, admin reset password, RBAC enforcement (`users:read`, `users:manage`), 64/64 full suite tests passing. |
-| **Phase 6** | Integration Foundation (Mendix Adapter) | Pending | | |
+| **Phase 6** | Integration Foundation (Mendix Adapter) | **Completed** | 2026-11-19 | Base integration interface, ResilientHttpClient (exponential backoff, retries on 408/429/5xx & network drops, correlation ID propagation), Canonical logistics schemas, Mendix client adapter, data transformation pipeline, Mendix sandbox simulation endpoints, 81/81 full suite tests passing. |
 | **Phase 7** | Shipment Management | Pending | | |
 | **Phase 8** | Tracking & Milestones | Pending | | |
 | **Phase 9** | Exception Management | Pending | | |

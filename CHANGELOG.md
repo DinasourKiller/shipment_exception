@@ -4,6 +4,23 @@ All notable changes to the Shipment Exception Control Tower project will be docu
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-19
+### Added
+- **PHASE 6 - Integration Foundation & Mendix Adapter:**
+  - Implemented `app/integrations/base/exceptions.py`: Integration exception hierarchy (`IntegrationException`, `IntegrationConnectionException`, `IntegrationTimeoutException`, `IntegrationAuthenticationException`, `IntegrationDataMappingException`).
+  - Implemented `app/integrations/base/canonical.py`: Canonical logistics models (`CanonicalShipment`, `CanonicalParty`, `CanonicalAddress`, `CanonicalLineItem`, `CanonicalMilestone`, `CanonicalShipmentStatus`, `CanonicalTransportMode`) decoupling core business logic from external schemas.
+  - Implemented `app/integrations/base/http_client.py`: `ResilientHttpClient` featuring automatic `X-Correlation-ID` propagation, exponential backoff with random jitter, automatic retries for transient status codes (408, 429, 500, 502, 503, 504) and network dropouts (`httpx.ConnectError`, `httpx.TimeoutException`), latency logging, and ASGI transport support.
+  - Implemented `app/integrations/base/adapter.py`: Abstract contract `BaseIntegrationAdapter`.
+  - Implemented `app/integrations/mendix/schemas.py`: External Mendix JSON models for shipments, addresses, parties, cargo items, milestones, and exception synchronization.
+  - Implemented `app/integrations/mendix/transformer.py`: `MendixDataTransformer` pipeline mapping external status codes, transport modes, addresses, parties, line items, and milestones into validated canonical domain models.
+  - Implemented `app/integrations/mendix/client.py`: `MendixClient` supporting `health_check()`, `fetch_shipment()`, `fetch_updated_shipments()`, and `push_exception_notification()`.
+  - Implemented `app/integrations/mendix/sandbox.py`: Development & integration mock REST router simulating Mendix endpoints mounted at `/api/v1/mock/mendix`.
+  - Added unit tests for HTTP client resilience and retries (`tests/unit/test_integration_http_client.py`).
+  - Added unit tests for Mendix data transformation pipeline (`tests/unit/test_mendix_transformer.py`).
+  - Added end-to-end integration tests (`tests/integration/test_mendix_adapter.py`) verifying health checks, shipment ingestion, batch polling, exception push, 404 handling, and 401 authentication rejection.
+  - Seeded standard demo users across 7 enterprise roles with password `Password123!` (`scripts/seed_demo_users.py`).
+  - Verified 81/81 automated tests passing across the entire project suite.
+
 ## [0.5.0] - 2026-11-19
 ### Added
 - **PHASE 5 - User Management:**

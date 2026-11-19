@@ -31,6 +31,7 @@ from app.core.logging import (
     setup_logging,
 )
 from app.database.connection import check_database_health
+from app.integrations.mendix.sandbox import sandbox_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.roles.router import router as roles_router
 from app.modules.users.router import router as users_router
@@ -205,6 +206,10 @@ def create_application() -> FastAPI:
         users_router,
         prefix=f"{settings.API_V1_PREFIX}/users",
         tags=["User Management"],
+    )
+    app.include_router(
+        sandbox_router,
+        prefix=settings.API_V1_PREFIX,
     )
 
     return app
