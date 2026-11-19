@@ -406,8 +406,13 @@
       { name: "Customer Support", email: "support@controltower.corp", role: "Customer Service", desc: "Tracking Visibility" },
     ];
 
-    let currentToken = localStorage.getItem("ct_token") || null;
-    let currentUser = JSON.parse(localStorage.getItem("ct_user") || "null");
+    var currentToken = localStorage.getItem("ct_token") || null;
+    var currentUser = null;
+    try {
+      currentUser = JSON.parse(localStorage.getItem("ct_user") || "null");
+    } catch (e) {
+      currentUser = null;
+    }
 
     function safeRenderIcons() {
       try {
@@ -493,16 +498,53 @@
         const json = await resp.json();
         if (resp.ok && json.success) {
           currentToken = json.data.access_token;
-          currentUser = json.data.user;
+
+          // Parse JWT claims
+          let claims = {};
+          try {
+            const payloadBase64 = currentToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+            claims = JSON.parse(decodeURIComponent(escape(atob(payloadBase64))));
+          } catch (e) {
+            try {
+              claims = JSON.parse(atob(currentToken.split(".")[1]));
+            } catch (e2) {}
+          }
+
+          // Fetch user details from /api/v1/auth/me
+          try {
+            const meResp = await fetch("/api/v1/auth/me", {
+              headers: { "Authorization": `Bearer ${currentToken}` }
+            });
+            const meJson = await meResp.json();
+            if (meResp.ok && meJson.success) {
+              currentUser = meJson.data;
+              currentUser.roles = (claims.roles || []).map(r => ({ name: r }));
+            } else {
+              currentUser = {
+                id: claims.sub || "unknown",
+                email: email,
+                full_name: email.split("@")[0],
+                roles: (claims.roles || []).map(r => ({ name: r }))
+              };
+            }
+          } catch (errMe) {
+            currentUser = {
+              id: claims.sub || "unknown",
+              email: email,
+              full_name: email.split("@")[0],
+              roles: (claims.roles || []).map(r => ({ name: r }))
+            };
+          }
+
           localStorage.setItem("ct_token", currentToken);
           localStorage.setItem("ct_user", JSON.stringify(currentUser));
           updateUserChip();
-          showToast(`Logged in as ${currentUser.full_name}`, "success");
+          showToast(`Logged in as ${currentUser.full_name || email}`, "success");
         } else {
           showToast(json.error?.message || "Login failed", "error");
         }
       } catch (err) {
-        showToast("Network error: " + err.message, "error");
+        showToast("Authentication error: " + err.message, "error");
       }
     }
 
@@ -521,23 +563,25 @@
       const sessionInfo = document.getElementById("session-info");
 
       if (currentUser && currentToken) {
-        const role = (currentUser.roles && currentUser.roles[0]?.name) || "User";
-        nameEl.textContent = currentUser.full_name;
-        roleEl.textContent = role;
-        sessionInfo.innerHTML = `
-          <div class="p-3 bg-slate-900 rounded-lg space-y-1">
-            <div><strong class="text-slate-300">User ID:</strong> <span class="font-mono text-blue-400">${currentUser.id}</span></div>
-            <div><strong class="text-slate-300">Email:</strong> ${currentUser.email}</div>
-            <div><strong class="text-slate-300">Role:</strong> <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">${role}</span></div>
-            <div class="mt-2"><strong class="text-slate-300">JWT Access Token:</strong>
-              <div class="font-mono text-[10px] text-slate-500 break-all bg-slate-950 p-2 rounded mt-1">${currentToken}</div>
+        const role = (currentUser.roles && currentUser.roles[0]?.name) || (Array.isArray(currentUser.roles) ? currentUser.roles[0] : null) || "User";
+        if (nameEl) nameEl.textContent = currentUser.full_name || currentUser.email;
+        if (roleEl) roleEl.textContent = role;
+        if (sessionInfo) {
+          sessionInfo.innerHTML = `
+            <div class="p-3 bg-slate-900 rounded-lg space-y-1">
+              <div><strong class="text-slate-300">User ID:</strong> <span class="font-mono text-blue-400">${currentUser.id}</span></div>
+              <div><strong class="text-slate-300">Email:</strong> ${currentUser.email}</div>
+              <div><strong class="text-slate-300">Role:</strong> <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">${role}</span></div>
+              <div class="mt-2"><strong class="text-slate-300">JWT Access Token:</strong>
+                <div class="font-mono text-[10px] text-slate-500 break-all bg-slate-950 p-2 rounded mt-1">${currentToken}</div>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        }
       } else {
-        nameEl.textContent = "Not Logged In";
-        roleEl.textContent = "Guest";
-        sessionInfo.innerHTML = `<p class="text-slate-500">No active token in local session. Please select a user above to authenticate.</p>`;
+        if (nameEl) nameEl.textContent = "Not Logged In";
+        if (roleEl) roleEl.textContent = "Guest";
+        if (sessionInfo) sessionInfo.innerHTML = `<p class="text-slate-500">No active token in local session. Please select a user above to authenticate.</p>`;
       }
       safeRenderIcons();
     }
