@@ -13,6 +13,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.common.constants import CORRELATION_ID_HEADER
@@ -88,19 +89,74 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Shutting down {settings.APP_NAME} cleanly.")
 
 
+OPENAPI_TAGS = [
+    {
+        "name": "System Diagnostics",
+        "description": "Liveness probes, readiness probes, and comprehensive system health diagnostics.",
+    },
+    {
+        "name": "Authentication",
+        "description": "User authentication, RS256 JWT access tokens, HttpOnly refresh cookies with reuse detection, and session management.",
+    },
+    {
+        "name": "Roles & RBAC",
+        "description": "Role-Based Access Control: enterprise roles, granular permissions, and dynamic role assignments.",
+    },
+    {
+        "name": "User Management",
+        "description": "User CRUD, paginated search and filtering, status toggling with immediate session invalidation, and password resets.",
+    },
+    {
+        "name": "Mendix Sandbox",
+        "description": "Simulated Mendix REST API endpoints for external shipment ingestion and operational exception synchronization.",
+    },
+]
+
+SWAGGER_DESCRIPTION = """
+### Enterprise Shipment Exception Control Tower API
+
+The Central Operations Platform for multi-modal logistics tracking, real-time exception detection, 
+SLA/financial impact assessment, and automated recovery orchestration.
+
+---
+
+### Demo User Accounts for Interactive Testing
+Authenticate via `POST /api/v1/auth/login` using any of the seeded enterprise accounts:
+
+| Role | Email | Password | Scope |
+|---|---|---|---|
+| **System Administrator** | `admin@controltower.corp` | `Password123!` | Full unrestricted access |
+| **Control Tower Analyst** | `analyst@controltower.corp` | `Password123!` | Shipments, Exceptions, Recovery |
+| **Dispatcher / Planner** | `dispatcher@controltower.corp` | `Password123!` | Shipments, Dispatch, Resource Allocation |
+| **Operations Manager** | `manager@controltower.corp` | `Password123!` | Management, Escalations, Approvals |
+| **Carrier** | `carrier@controltower.corp` | `Password123!` | Carrier Recovery Responses |
+
+#### How to Authorize in Swagger UI:
+1. Call `POST /api/v1/auth/login` with your desired role credentials.
+2. Copy the `access_token` from the response.
+3. Click the green **Authorize** button (top right of this page).
+4. Enter `Bearer <your_access_token>` in the dialog and click **Authorize**.
+5. Your authorization token is automatically persisted in your browser (`persistAuthorization: true`).
+"""
+
+
 def create_application() -> FastAPI:
     """Factory creating and configuring the primary FastAPI application."""
     app = FastAPI(
-        title=settings.APP_NAME,
+        title=f"{settings.APP_NAME} API",
         version=settings.APP_VERSION,
-        description=(
-            "Enterprise Shipment Exception Control Tower API. "
-            "Monitors shipments, detects operational exceptions, calculates SLA/business impact, "
-            "and orchestrates recovery workflows."
-        ),
+        description=SWAGGER_DESCRIPTION,
         openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
         docs_url=f"{settings.API_V1_PREFIX}/docs",
         redoc_url=f"{settings.API_V1_PREFIX}/redoc",
+        openapi_tags=OPENAPI_TAGS,
+        swagger_ui_parameters={
+            "persistAuthorization": True,
+            "displayRequestDuration": True,
+            "filter": True,
+            "docExpansion": "list",
+            "defaultModelsExpandDepth": 1,
+        },
         lifespan=lifespan,
     )
 
@@ -211,6 +267,19 @@ def create_application() -> FastAPI:
         sandbox_router,
         prefix=settings.API_V1_PREFIX,
     )
+
+    # Convenience Redirects to Swagger UI
+    @app.get("/", include_in_schema=False)
+    async def root_redirect():
+        return RedirectResponse(url=f"{settings.API_V1_PREFIX}/docs")
+
+    @app.get("/docs", include_in_schema=False)
+    async def docs_redirect():
+        return RedirectResponse(url=f"{settings.API_V1_PREFIX}/docs")
+
+    @app.get("/redoc", include_in_schema=False)
+    async def redoc_redirect():
+        return RedirectResponse(url=f"{settings.API_V1_PREFIX}/redoc")
 
     return app
 
