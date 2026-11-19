@@ -64,4 +64,16 @@
 | `POST` | `/api/v1/roles/assign/{user_id}` | `users:manage` | Assigns roles to an existing user. |
 | `DELETE` | `/api/v1/roles/assign/{user_id}/{role_id}` | `users:manage` | Revokes a role assignment from an existing user. |
 
+## User Management Endpoints (Phase 5)
+
+| Method | Endpoint | Required Permission | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/users` | `users:read` | Lists users with pagination (`page`, `page_size`), search filter (`search` by name or email), active status (`is_active`), and role name filter (`role`). |
+| `POST` | `/api/v1/users` | `users:manage` | Creates a new user with optional role assignments, phone number, and Argon2id hashed password. |
+| `GET` | `/api/v1/users/{user_id}` | `users:read` | Retrieves full profile and assigned roles for a specific user. |
+| `PUT` | `/api/v1/users/{user_id}` | `users:manage` | Updates profile details (full name, phone number). |
+| `PUT` | `/api/v1/users/{user_id}/status` | `users:manage` | Activates or deactivates user account. Deactivation immediately invalidates all active sessions/refresh tokens. |
+| `PUT` | `/api/v1/users/{user_id}/roles` | `users:manage` | Synchronizes user roles (replaces existing assignments with provided set). |
+| `POST` | `/api/v1/users/{user_id}/reset-password` | `users:manage` | Administrative password reset. Updates password and revokes all active user sessions. |
+
 *Domain endpoints will be documented as their respective phases are implemented.*

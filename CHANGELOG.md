@@ -4,6 +4,25 @@ All notable changes to the Shipment Exception Control Tower project will be docu
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-19
+### Added
+- **PHASE 5 - User Management:**
+  - Implemented `app/modules/users/schemas.py`: Pydantic request/response models for User creation, profile updates, status toggling, role assignment syncing, and administrative password resets.
+  - Implemented `app/modules/users/repository.py`: Async repository with pagination, full-text search across `email` and `full_name`, filtering by `is_active` and role name, relationship pre-loading via `selectinload()`, and immediate active session revocation on user deactivation or admin password reset.
+  - Implemented `app/modules/users/service.py`: Domain validation, conflict detection for existing emails, role resolution, Argon2id password hashing, and orchestration of status/role changes.
+  - Implemented `app/modules/users/router.py`:
+    - `GET /api/v1/users`: Paginated, filtered list of users (requires `users:read`).
+    - `POST /api/v1/users`: Admin user creation with role assignments (requires `users:manage`).
+    - `GET /api/v1/users/{user_id}`: Retrieve single user profile (requires `users:read`).
+    - `PUT /api/v1/users/{user_id}`: Update user profile (requires `users:manage`).
+    - `PUT /api/v1/users/{user_id}/status`: Activate/deactivate user and revoke sessions on deactivation (requires `users:manage`).
+    - `PUT /api/v1/users/{user_id}/roles`: Atomic synchronization of assigned roles (requires `users:manage`).
+    - `POST /api/v1/users/{user_id}/reset-password`: Administrative password reset and session invalidation (requires `users:manage`).
+  - Mounted `/api/v1/users` router into FastAPI application in `app/main.py`.
+  - Added unit tests for schema validation (`tests/unit/test_users_schemas.py`).
+  - Added end-to-end integration tests (`tests/integration/test_users_api.py`) verifying user CRUD, search, role filtering, conflict prevention, status toggling with session invalidation, and RBAC guard enforcement.
+  - Verified 64/64 automated tests passing across the full test suite.
+
 ## [0.4.0] - 2026-11-19
 ### Added
 - **PHASE 4 - Authorization & Role-Based Access Control (RBAC):**
