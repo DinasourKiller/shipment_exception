@@ -17,6 +17,7 @@ from app.modules.shipments.models import CargoItem, Shipment, ShipmentMilestone,
 from app.modules.tracking.models import TrackingEvent
 from app.modules.exceptions.models import ExceptionAuditLog, ShipmentException
 from app.modules.impact.models import ImpactAssessment
+from app.modules.recovery.models import RecoveryAuditLog, RecoveryPlan
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

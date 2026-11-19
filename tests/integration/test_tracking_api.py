@@ -179,9 +179,10 @@ async def test_get_latest_tracking_event(tracking_test_setup):
         sync_resp = await client.post("/api/v1/shipments/sync/MDX-SHP-1002", headers=admin_headers)
         shipment_id = sync_resp.json()["data"]["id"]
 
-        # Record two events with distinct timestamps
-        t1 = "2026-11-19T10:00:00Z"
-        t2 = "2026-11-19T12:00:00Z"
+        # Record two events with distinct timestamps guaranteed to be newer than past test telemetry
+        now = datetime.now(timezone.utc)
+        t1 = (now + timedelta(hours=10)).isoformat()
+        t2 = (now + timedelta(hours=12)).isoformat()
 
         await client.post(
             f"/api/v1/tracking/{shipment_id}/events",
