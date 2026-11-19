@@ -5,13 +5,15 @@ Implements RBAC with many-to-many relationships:
 - Roles <-> Permissions (via role_permissions)
 """
 
-import uuid
-from typing import List
+from typing import TYPE_CHECKING, List
 from sqlalchemy import Column, ForeignKey, String, Table, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+
+if TYPE_CHECKING:
+    from app.modules.authentication.models import User
 
 
 # Association table: users <-> roles

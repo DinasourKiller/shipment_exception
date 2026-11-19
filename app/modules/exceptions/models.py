@@ -14,12 +14,13 @@ from sqlalchemy import (
     Index,
     String,
     Text,
-    desc,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from app.modules.authentication.models import User
+from app.modules.shipments.models import Shipment
 
 
 class ExceptionType(str, enum.Enum):
@@ -159,7 +160,7 @@ class ShipmentException(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     # Relationships
     shipment: Mapped["Shipment"] = relationship(
         "Shipment",
-        back_populates="exceptions",
+        foreign_keys=[shipment_id],
         lazy="selectin",
     )
     assigned_to: Mapped[Optional["User"]] = relationship(

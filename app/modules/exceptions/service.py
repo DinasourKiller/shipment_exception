@@ -7,11 +7,10 @@ exception lifecycle state transitions, and upstream Mendix synchronization.
 import math
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
-    BusinessRuleViolationException,
     EntityNotFoundException,
     ValidationException,
 )
@@ -35,9 +34,8 @@ from app.modules.exceptions.schemas import (
     ExceptionStatusUpdateRequest,
     PaginatedExceptionResponse,
 )
-from app.modules.shipments.models import Shipment, ShipmentMilestone
+from app.modules.shipments.models import Shipment
 from app.modules.shipments.repository import ShipmentRepository
-from app.modules.tracking.models import TrackingEvent
 from app.modules.tracking.repository import TrackingRepository
 
 logger = get_logger("control_tower.exceptions.service")

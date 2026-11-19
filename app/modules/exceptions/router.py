@@ -13,7 +13,6 @@ from app.common.schemas import ApiResponse
 from app.core.logging import get_correlation_id
 from app.core.permissions import require_permissions
 from app.database.connection import get_db_session
-from app.dependencies import get_current_user
 from app.integrations.mendix.client import MendixClient
 from app.modules.authentication.models import User
 from app.modules.exceptions.schemas import (

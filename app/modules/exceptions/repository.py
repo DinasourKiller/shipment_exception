@@ -4,7 +4,6 @@ Provides data access routines, filtering, pagination, and audit logging
 for the Exception Management domain.
 """
 
-import math
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -13,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.modules.exceptions.models import (
-    ExceptionAction,
     ExceptionAuditLog,
     ExceptionStatus,
     ShipmentException,

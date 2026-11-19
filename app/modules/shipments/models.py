@@ -152,12 +152,6 @@ class Shipment(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         order_by="ShipmentMilestone.planned_time",
         lazy="selectin",
     )
-    exceptions: Mapped[List["ShipmentException"]] = relationship(
-        "ShipmentException",
-        back_populates="shipment",
-        cascade="all, delete-orphan",
-        lazy="selectin",
-    )
 
     __table_args__ = (
         Index("ix_shipments_status_mode", "status", "transport_mode"),
