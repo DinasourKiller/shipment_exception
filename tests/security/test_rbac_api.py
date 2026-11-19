@@ -168,3 +168,80 @@ async def test_role_assignment_lifecycle(async_client: AsyncClient, rbac_test_us
     assert remove_resp.status_code == 200
     remaining_roles = [r["name"] for r in remove_resp.json()["data"]["roles"]]
     assert "Dispatcher / Planner" not in remaining_roles
+
+
+async def test_jwt_claims_contain_roles_after_login(async_client: AsyncClient, rbac_test_users: dict):
+    """Verify that logging in issues a JWT containing the user's assigned roles."""
+    from app.core.jwt import decode_access_token
+
+    analyst = rbac_test_users["analyst"]
+    login_resp = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": analyst.email, "password": "AnalystPass123!"},
+    )
+    assert login_resp.status_code == 200
+    access_token = login_resp.json()["data"]["access_token"]
+
+    payload = decode_access_token(access_token)
+    assert "roles" in payload
+    assert "Control Tower Analyst" in payload["roles"]
+
+
+async def test_duplicate_role_creation_returns_conflict(async_client: AsyncClient, rbac_test_users: dict):
+    """Attempting to create an existing role must return 409 Conflict."""
+    response = await async_client.post(
+        "/api/v1/roles",
+        headers={"Authorization": f"Bearer {rbac_test_users['admin_token']}"},
+        json={"name": "System Administrator", "description": "Duplicate role"},
+    )
+    assert response.status_code == 409
+    payload = response.json()
+    assert payload["success"] is False
+    assert payload["error"]["code"] == "CONFLICT"
+
+
+async def test_assign_role_to_nonexistent_user_returns_404(async_client: AsyncClient, rbac_test_users: dict):
+    """Assigning a role to a non-existent user UUID must return 404."""
+    random_user_id = uuid.uuid4()
+    response = await async_client.post(
+        f"/api/v1/roles/assign/{random_user_id}",
+        headers={"Authorization": f"Bearer {rbac_test_users['admin_token']}"},
+        json={"role_ids": [str(uuid.uuid4())]},
+    )
+    assert response.status_code == 404
+    payload = response.json()
+    assert payload["error"]["code"] == "ENTITY_NOT_FOUND"
+
+
+async def test_assign_nonexistent_role_to_user_returns_404(async_client: AsyncClient, rbac_test_users: dict):
+    """Assigning a non-existent role UUID to an existing user must return 404."""
+    plain_user = rbac_test_users["plain"]
+    random_role_id = uuid.uuid4()
+    response = await async_client.post(
+        f"/api/v1/roles/assign/{plain_user.id}",
+        headers={"Authorization": f"Bearer {rbac_test_users['admin_token']}"},
+        json={"role_ids": [str(random_role_id)]},
+    )
+    assert response.status_code == 404
+    payload = response.json()
+    assert payload["error"]["code"] == "ENTITY_NOT_FOUND"
+
+
+async def test_unauthenticated_request_to_roles_returns_401(async_client: AsyncClient):
+    """Requesting protected role endpoints without token must return 401."""
+    response = await async_client.get("/api/v1/roles")
+    assert response.status_code == 401
+    payload = response.json()
+    assert payload["error"]["code"] == "UNAUTHORIZED"
+
+
+async def test_tampered_token_to_roles_returns_401(async_client: AsyncClient):
+    """Requesting protected role endpoints with tampered JWT must return 401."""
+    response = await async_client.get(
+        "/api/v1/roles",
+        headers={"Authorization": "Bearer eyJhbGciOiJSUzI1NiJ9.invalidpayload.invalidsignature"},
+    )
+    assert response.status_code == 401
+    payload = response.json()
+    assert payload["error"]["code"] == "UNAUTHORIZED"
+
