@@ -55,6 +55,30 @@ The application uses **PostgreSQL** with **SQLAlchemy 2.x** and **Alembic** for 
 - `failure_reason`: VARCHAR(255), NULLABLE
 - `attempted_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
 
+### 4. `roles` Table (Phase 4)
+- `id`: UUID (Primary Key, default uuid.uuid4)
+- `name`: VARCHAR(100), UNIQUE, NOT NULL, INDEXED
+- `description`: TEXT, NULLABLE
+- `created_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+- `updated_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+
+### 5. `permissions` Table (Phase 4)
+- `id`: UUID (Primary Key, default uuid.uuid4)
+- `name`: VARCHAR(100), UNIQUE, NOT NULL, INDEXED
+- `resource`: VARCHAR(50), NOT NULL, INDEXED
+- `action`: VARCHAR(50), NOT NULL
+- `description`: TEXT, NULLABLE
+- `created_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+- `updated_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+
+### 6. `user_roles` Association Table (Phase 4)
+- `user_id`: UUID, FOREIGN KEY (`users.id`, ON DELETE CASCADE), PRIMARY KEY
+- `role_id`: UUID, FOREIGN KEY (`roles.id`, ON DELETE CASCADE), PRIMARY KEY
+
+### 7. `role_permissions` Association Table (Phase 4)
+- `role_id`: UUID, FOREIGN KEY (`roles.id`, ON DELETE CASCADE), PRIMARY KEY
+- `permission_id`: UUID, FOREIGN KEY (`permissions.id`, ON DELETE CASCADE), PRIMARY KEY
+
 ## Migrations Engine (`app/database/migrations/`)
 - Alembic configured for async migrations via `async_engine_from_config` in `app/database/migrations/env.py`.
 - Migration templates output formatted revisions in UTC (`YYYYMMDD_HHMM_<rev>_<slug>.py`).

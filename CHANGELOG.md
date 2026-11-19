@@ -4,6 +4,27 @@ All notable changes to the Shipment Exception Control Tower project will be docu
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-19
+### Added
+- **PHASE 4 - Authorization & Role-Based Access Control (RBAC):**
+  - Implemented `app/modules/roles/models.py`: `Role`, `Permission`, and association tables `user_roles` and `role_permissions` with CASCADE foreign keys and unique constraints.
+  - Linked `User.roles` relationship in `app/modules/authentication/models.py`.
+  - Generated and applied Alembic migration `fbe3df102447_create_rbac_tables.py` creating RBAC tables in PostgreSQL.
+  - Created `scripts/seed_rbac.py` seeding 19 granular permissions and 7 standard enterprise roles (`System Administrator`, `Control Tower Analyst`, `Dispatcher / Planner`, `Operations Manager`, `Carrier`, `Warehouse Supervisor`, `Customer Service`).
+  - Implemented `app/core/permissions.py`:
+    - `require_permissions(*permissions)`: Enforces user permissions with automatic `System Administrator` bypass.
+    - `require_roles(*roles)`: Enforces role membership.
+  - Updated JWT token issuance to embed user roles in token claims.
+  - Implemented `app/modules/roles/router.py`:
+    - `GET /api/v1/roles` (List all roles)
+    - `GET /api/v1/roles/permissions` (List all permissions)
+    - `POST /api/v1/roles` (Create custom role)
+    - `POST /api/v1/roles/assign/{user_id}` (Assign roles to user)
+    - `DELETE /api/v1/roles/assign/{user_id}/{role_id}` (Revoke role from user)
+  - Added unit tests for RBAC models (`tests/unit/test_roles_models.py`).
+  - Added security integration tests covering authorization, forbidden access (403), admin bypass, and role assignment lifecycle (`tests/security/test_rbac_api.py`).
+  - Verified 35/35 automated tests passing across the entire test suite.
+
 ## [0.3.0] - 2026-11-19
 ### Added
 - **PHASE 3 - Authentication & Session Security:**

@@ -32,6 +32,7 @@ from app.core.logging import (
 )
 from app.database.connection import check_database_health
 from app.modules.authentication.router import router as auth_router
+from app.modules.roles.router import router as roles_router
 
 settings = get_settings()
 logger = get_logger("control_tower.main")
@@ -193,6 +194,11 @@ def create_application() -> FastAPI:
         auth_router,
         prefix=f"{settings.API_V1_PREFIX}/auth",
         tags=["Authentication"],
+    )
+    app.include_router(
+        roles_router,
+        prefix=f"{settings.API_V1_PREFIX}/roles",
+        tags=["Roles & RBAC"],
     )
 
     return app

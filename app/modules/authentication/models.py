@@ -35,6 +35,12 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    roles: Mapped[List["Role"]] = relationship(
+        "Role",
+        secondary="user_roles",
+        back_populates="users",
+        lazy="selectin",
+    )
 
 
 class RefreshToken(Base, UUIDPrimaryKeyMixin, TimestampMixin):

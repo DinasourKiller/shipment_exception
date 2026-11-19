@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.modules.authentication.models import LoginAttempt, RefreshToken, User
 
@@ -22,14 +23,14 @@ class AuthenticationRepository:
     # ================= User Operations =================
 
     async def get_user_by_id(self, user_id: uuid.UUID) -> Optional[User]:
-        """Retrieve user by unique UUID."""
-        stmt = select(User).where(User.id == user_id)
+        """Retrieve user by unique UUID with roles preloaded."""
+        stmt = select(User).options(selectinload(User.roles)).where(User.id == user_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_user_by_email(self, email: str) -> Optional[User]:
-        """Retrieve user by unique lowercase email."""
-        stmt = select(User).where(User.email == email.lower().strip())
+        """Retrieve user by unique lowercase email with roles preloaded."""
+        stmt = select(User).options(selectinload(User.roles)).where(User.email == email.lower().strip())
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 

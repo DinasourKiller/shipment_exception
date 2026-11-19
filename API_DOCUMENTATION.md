@@ -54,4 +54,14 @@
 | `POST` | `/api/v1/auth/change-password` | Bearer JWT | Changes password (Argon2id) and terminates all active sessions. |
 | `POST` | `/api/v1/auth/forgot-password` | None | Generic endpoint initiating password reset without user enumeration. |
 
+## Roles & Permissions Endpoints (Phase 4)
+
+| Method | Endpoint | Required Permission | Description |
+|---|---|---|---|
+| `GET` | `/api/v1/roles` | `roles:read` | Lists all roles with assigned permissions. |
+| `GET` | `/api/v1/roles/permissions` | `roles:read` | Lists all available granular system permissions. |
+| `POST` | `/api/v1/roles` | `roles:manage` | Creates a new role with assigned permissions. |
+| `POST` | `/api/v1/roles/assign/{user_id}` | `users:manage` | Assigns roles to an existing user. |
+| `DELETE` | `/api/v1/roles/assign/{user_id}/{role_id}` | `users:manage` | Revokes a role assignment from an existing user. |
+
 *Domain endpoints will be documented as their respective phases are implemented.*

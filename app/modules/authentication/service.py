@@ -170,8 +170,9 @@ class AuthenticationService:
             replaced_by_token_id=new_token_record.id,
         )
 
-        # Issue new short-lived access token
-        access_token = create_access_token(user_id=user.id, email=user.email)
+        # Issue new short-lived access token with user roles
+        user_roles = [r.name for r in user.roles] if hasattr(user, "roles") and user.roles else []
+        access_token = create_access_token(user_id=user.id, email=user.email, roles=user_roles)
         token_response = TokenResponse(
             access_token=access_token,
             token_type="Bearer",
@@ -226,8 +227,9 @@ class AuthenticationService:
         )
         await self.repo.create_refresh_token(refresh_record)
 
-        # Generate JWT access token
-        access_token = create_access_token(user_id=user.id, email=user.email)
+        # Generate JWT access token with user roles
+        user_roles = [r.name for r in user.roles] if hasattr(user, "roles") and user.roles else []
+        access_token = create_access_token(user_id=user.id, email=user.email, roles=user_roles)
 
         token_response = TokenResponse(
             access_token=access_token,
