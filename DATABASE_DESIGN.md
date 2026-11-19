@@ -21,6 +21,40 @@ The application uses **PostgreSQL** with **SQLAlchemy 2.x** and **Alembic** for 
 - `get_db_session()` FastAPI dependency: commits transaction on success, rolls back on exception, and closes session on completion.
 - `check_database_health()` executes lightweight `SELECT 1` with transaction rollback to continuously verify connectivity for container orchestrators.
 
+## Implemented Tables & Schemas
+
+### 1. `users` Table (Phase 3)
+- `id`: UUID (Primary Key, default uuid.uuid4)
+- `email`: VARCHAR(255), UNIQUE, NOT NULL, INDEXED
+- `hashed_password`: VARCHAR(255), NOT NULL (Argon2id format)
+- `full_name`: VARCHAR(255), NOT NULL
+- `is_active`: BOOLEAN, NOT NULL, default TRUE
+- `is_verified`: BOOLEAN, NOT NULL, default FALSE
+- `failed_login_attempts`: INTEGER, NOT NULL, default 0
+- `locked_until`: TIMESTAMP WITH TIME ZONE, NULLABLE
+- `created_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+- `updated_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+
+### 2. `refresh_tokens` Table (Phase 3)
+- `id`: UUID (Primary Key, default uuid.uuid4)
+- `user_id`: UUID, FOREIGN KEY (`users.id`, ON DELETE CASCADE), NOT NULL, INDEXED
+- `token_hash`: VARCHAR(64), UNIQUE, NOT NULL, INDEXED (SHA-256 digest of raw 64-char token)
+- `expires_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+- `is_revoked`: BOOLEAN, NOT NULL, default FALSE
+- `revoked_at`: TIMESTAMP WITH TIME ZONE, NULLABLE
+- `replaced_by_token_id`: UUID, NULLABLE (pointer to replacement token for reuse detection)
+- `created_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+- `updated_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+
+### 3. `login_attempts` Table (Phase 3)
+- `id`: UUID (Primary Key, default uuid.uuid4)
+- `email`: VARCHAR(255), NOT NULL, INDEXED
+- `ip_address`: VARCHAR(45), NULLABLE
+- `user_agent`: VARCHAR(500), NULLABLE
+- `success`: BOOLEAN, NOT NULL
+- `failure_reason`: VARCHAR(255), NULLABLE
+- `attempted_at`: TIMESTAMP WITH TIME ZONE, NOT NULL
+
 ## Migrations Engine (`app/database/migrations/`)
 - Alembic configured for async migrations via `async_engine_from_config` in `app/database/migrations/env.py`.
 - Migration templates output formatted revisions in UTC (`YYYYMMDD_HHMM_<rev>_<slug>.py`).

@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | **Phase 1** | Project Foundation & Base Infrastructure | **Completed** | 2026-11-18 | FastAPI factory, Pydantic settings, JSON logging, Correlation middleware, Health endpoints, Docker config, Automated tests passing. |
 | **Phase 2** | Database Foundation (PostgreSQL + SQLAlchemy 2.x + Alembic) | **Completed** | 2026-11-19 | Async SQLAlchemy 2.x engine, asyncpg driver, Declarative Base, UUID v4 mixin, UTC timestamp mixin, session dependency injection, Alembic async migrations, live PostgreSQL connectivity verification, 16/16 tests passing. |
-| **Phase 3** | Authentication (JWT, Refresh Token Rotation, Argon2id) | Pending | | |
+| **Phase 3** | Authentication (JWT, Refresh Token Rotation, Argon2id) | **Completed** | 2026-11-19 | User & RefreshToken entities, Argon2id hashing, RS256 JWT, opaque token single-use rotation with reuse detection, lockout policy, login/refresh/logout/me APIs, Alembic migration applied to PostgreSQL, 27/27 tests passing. |
 | **Phase 4** | Authorization & RBAC | Pending | | |
 | **Phase 5** | User Management | Pending | | |
 | **Phase 6** | Integration Foundation (Mendix Adapter) | Pending | | |

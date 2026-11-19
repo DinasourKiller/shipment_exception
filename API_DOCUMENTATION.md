@@ -43,4 +43,15 @@
 | `GET` | `/health/ready` | Readiness check (verifies database & external dependencies) |
 | `GET` | `/api/v1/ping` | Versioned sanity ping |
 
+## Authentication Endpoints (Phase 3)
+
+| Method | Endpoint | Auth Required | Description |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/login` | None | Authenticates user; returns RS256 JWT access token in JSON body and sets `refresh_token` in an HttpOnly, Secure, SameSite cookie. |
+| `POST` | `/api/v1/auth/refresh` | Cookie (`refresh_token`) | Rotates opaque refresh token; detects token reuse attacks and revokes all active sessions if an already rotated token is replayed. |
+| `POST` | `/api/v1/auth/logout` | Cookie (`refresh_token`) | Revokes the refresh token record in PostgreSQL and clears the cookie. |
+| `GET` | `/api/v1/auth/me` | Bearer JWT | Returns current authenticated user profile (`id`, `email`, `full_name`, `is_active`, `is_verified`). |
+| `POST` | `/api/v1/auth/change-password` | Bearer JWT | Changes password (Argon2id) and terminates all active sessions. |
+| `POST` | `/api/v1/auth/forgot-password` | None | Generic endpoint initiating password reset without user enumeration. |
+
 *Domain endpoints will be documented as their respective phases are implemented.*

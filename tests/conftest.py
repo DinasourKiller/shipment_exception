@@ -9,7 +9,7 @@ from app.database.connection import async_engine
 from app.main import app
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def test_settings() -> Settings:
     """Fixture providing testing settings."""
     return get_settings()
@@ -22,7 +22,7 @@ def client() -> TestClient:
         yield test_client
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 async def async_client() -> AsyncClient:
     """Asynchronous HTTPX test client fixture."""
     transport = ASGITransport(app=app)
@@ -30,7 +30,7 @@ async def async_client() -> AsyncClient:
         yield ac
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 async def cleanup_db_engine():
     """Clean up connection pool across test event loops."""
     yield

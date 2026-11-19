@@ -31,6 +31,7 @@ from app.core.logging import (
     setup_logging,
 )
 from app.database.connection import check_database_health
+from app.modules.authentication.router import router as auth_router
 
 settings = get_settings()
 logger = get_logger("control_tower.main")
@@ -186,6 +187,13 @@ def create_application() -> FastAPI:
             data={"message": "pong"},
             correlation_id=get_correlation_id(),
         )
+
+    # Register Business Domain Routers
+    app.include_router(
+        auth_router,
+        prefix=f"{settings.API_V1_PREFIX}/auth",
+        tags=["Authentication"],
+    )
 
     return app
 
