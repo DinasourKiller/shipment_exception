@@ -95,4 +95,14 @@
 | `POST` | `/api/v1/shipments/sync` | `shipments:write` | Triggers batch polling synchronization of updated shipments from Mendix. |
 | `PATCH` | `/api/v1/shipments/{shipment_id}/status` | `shipments:write` | Transitions operational lifecycle status with state machine enforcement. |
 
+## Tracking & Milestones Endpoints (Phase 8)
+
+| Method | Endpoint | Required Permission | Description |
+|---|---|---|---|
+| `POST` | `/api/v1/tracking/{shipment_id}/events` | `shipments:write` | Records tracking event / telemetry ping, links matching milestone, advances status, and checks ETA impact. |
+| `GET` | `/api/v1/tracking/{shipment_id}/timeline` | `shipments:read` | Complete chronological tracking timeline and milestone progress with delay indicators. |
+| `GET` | `/api/v1/tracking/{shipment_id}/latest` | `shipments:read` | Retrieves the latest physical tracking event or GPS coordinates recorded for a shipment. |
+| `PATCH` | `/api/v1/tracking/milestones/{milestone_id}` | `shipments:write` | Manually updates milestone status (`COMPLETED`, `DELAYED`, etc.) and recalculates delivery ETA. |
+| `POST` | `/api/v1/tracking/{shipment_id}/recalculate-eta` | `shipments:write` | Performs dynamic delivery ETA projection based on transit milestone delays. |
+
 *Domain endpoints will be documented as their respective phases are implemented.*

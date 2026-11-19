@@ -9,7 +9,7 @@
 | **Phase 5** | User Management | **Completed** | 2026-11-19 | User CRUD schemas, repository, service, and router; pagination, search, role-based filtering, status toggle with session revocation, role sync, admin reset password, RBAC enforcement (`users:read`, `users:manage`), 64/64 full suite tests passing. |
 | **Phase 6** | Integration Foundation (Mendix Adapter) | **Completed** | 2026-11-19 | Base integration interface, ResilientHttpClient (exponential backoff, retries on 408/429/5xx & network drops, correlation ID propagation), Canonical logistics schemas, Mendix client adapter, data transformation pipeline, Mendix sandbox simulation endpoints, 81/81 full suite tests passing. |
 | **Phase 7** | Shipment Management | **Completed** | 2026-11-19 | PostgreSQL models (`shipments`, `shipment_parties`, `cargo_items`, `shipment_milestones`), Alembic migration `79c9a6522ec2`, Mendix canonical ingestion pipeline, state machine transitions, pagination, filtering, full-text search, and RBAC guards (`shipments:read`, `shipments:write`), 93/93 full suite tests passing. |
-| **Phase 8** | Tracking & Milestones | Pending | | |
+| **Phase 8** | Tracking & Milestones | **Completed** | 2026-11-19 | `tracking_events` PostgreSQL entity, Alembic migration `f4f80d007059`, telemetry ingestion, automated milestone state progression, dynamic delivery ETA recalculation engine, chronological timeline APIs, 103/103 full suite tests passing. |
 | **Phase 9** | Exception Management | Pending | | |
 | **Phase 10** | Impact Analysis | Pending | | |
 | **Phase 11** | Severity Engine | Pending | | |

@@ -4,6 +4,24 @@ All notable changes to the Shipment Exception Control Tower project will be docu
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-19
+### Added
+- **PHASE 8 - Tracking & Milestones:**
+  - Implemented `app/modules/tracking/models.py`: PostgreSQL model `TrackingEvent` capturing physical scan telemetry, event codes, event timestamps, GPS coordinates, location names, and raw JSONB payloads.
+  - Generated and applied Alembic migration `f4f80d007059_create_tracking_events_table.py` creating the `tracking_events` table and composite indexes in PostgreSQL.
+  - Implemented `app/modules/tracking/schemas.py`: Pydantic request/response models (`TrackingEventCreateRequest`, `TrackingEventResponse`, `MilestoneProgressItem`, `ShipmentTrackingTimelineResponse`, `MilestoneUpdateRequest`, `EtaRecalculationResponse`).
+  - Implemented `app/modules/tracking/repository.py`: Tracking repository handling telemetry event persistence, paginated timeline queries, matching milestones, and shipment delivery ETA updates.
+  - Implemented `app/modules/tracking/service.py`: Automated milestone progression engine (linking tracking events to milestones and completing checkpoints), automated parent shipment lifecycle advancement, dynamic ETA projection engine with delay tolerance buffer, and chronological timeline generation.
+  - Implemented `app/modules/tracking/router.py`:
+    - `POST /api/v1/tracking/{shipment_id}/events`: Record tracking scan or GPS telemetry ping (requires `shipments:write`).
+    - `GET /api/v1/tracking/{shipment_id}/timeline`: Retrieve full chronological tracking timeline and milestone progress with delay indicators (requires `shipments:read`).
+    - `GET /api/v1/tracking/{shipment_id}/latest`: Get the latest tracking event or GPS coordinate (requires `shipments:read`).
+    - `PATCH /api/v1/tracking/milestones/{milestone_id}`: Manually update milestone status and completion timestamp (requires `shipments:write`).
+    - `POST /api/v1/tracking/{shipment_id}/recalculate-eta`: Force dynamic delivery ETA projection (requires `shipments:write`).
+  - Added unit tests for dynamic ETA recalculation on schedule and with delay, and milestone validation (`tests/unit/test_tracking_service.py`).
+  - Added end-to-end integration tests (`tests/integration/test_tracking_api.py`) verifying event ingestion, automated milestone progression, GPS pings, timeline retrieval, manual updates, and RBAC guards.
+  - Verified 103/103 automated tests passing across the entire project suite.
+
 ## [0.7.0] - 2026-11-19
 ### Added
 - **PHASE 7 - Shipment Management:**

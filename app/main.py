@@ -36,6 +36,7 @@ from app.integrations.mendix.sandbox import sandbox_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.roles.router import router as roles_router
 from app.modules.shipments.router import router as shipments_router
+from app.modules.tracking.router import router as tracking_router
 from app.modules.users.router import router as users_router
 
 settings = get_settings()
@@ -110,6 +111,10 @@ OPENAPI_TAGS = [
     {
         "name": "Shipment Management",
         "description": "Shipment operational records, Mendix ingestion pipeline, tracking milestones, and status lifecycle management.",
+    },
+    {
+        "name": "Tracking & Milestones",
+        "description": "Real-time physical scan events, GPS telemetry pings, automated milestone progression, and dynamic delivery ETA recalculation.",
     },
     {
         "name": "Mendix Sandbox",
@@ -272,6 +277,11 @@ def create_application() -> FastAPI:
         shipments_router,
         prefix=f"{settings.API_V1_PREFIX}/shipments",
         tags=["Shipment Management"],
+    )
+    app.include_router(
+        tracking_router,
+        prefix=f"{settings.API_V1_PREFIX}/tracking",
+        tags=["Tracking & Milestones"],
     )
     app.include_router(
         sandbox_router,
