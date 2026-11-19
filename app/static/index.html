@@ -27,7 +27,7 @@
           Shipment Exception Control Tower
           <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Testing Console</span>
         </h1>
-        <p class="text-xs text-slate-400">Interactive Web Harness (Phases 1–9)</p>
+        <p class="text-xs text-slate-400">Interactive Web Harness (Phases 1–10)</p>
       </div>
     </div>
 
@@ -325,8 +325,37 @@
       </div>
     </section>
 
-    <!-- TAB 4: EXCEPTIONS & ANOMALIES (PHASE 9) -->
+    <!-- TAB 4: EXCEPTIONS, ANOMALIES & IMPACT (PHASES 9–10) -->
     <section id="tab-exceptions" class="space-y-6 hidden">
+      <!-- Executive Impact Metrics Banner (Phase 10) -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-slate-800/40 border border-slate-700/60 p-3.5 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Assessed Exceptions</div>
+          <div id="stat-impact-assessed" class="text-xl font-bold text-white mt-1">0</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Quantitative evaluations</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/60 p-3.5 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Financial Exposure</div>
+          <div id="stat-impact-exposure" class="text-xl font-bold text-rose-400 mt-1">$0.00</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Total estimated loss (USD)</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/60 p-3.5 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">High Risk Critical</div>
+          <div id="stat-impact-critical" class="text-xl font-bold text-amber-400 mt-1">0</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Score &ge; 75 / 100</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/60 p-3.5 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Auto-Escalated</div>
+          <div id="stat-impact-escalated" class="text-xl font-bold text-purple-400 mt-1">0</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Triggered supervisor flow</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/60 p-3.5 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Average Risk Score</div>
+          <div id="stat-impact-avgscore" class="text-xl font-bold text-blue-400 mt-1">0.0</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Normalized index (0–100)</div>
+        </div>
+      </div>
+
       <!-- Actions Bar -->
       <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl">
         <div class="flex items-center gap-2 flex-wrap">
@@ -334,7 +363,7 @@
             <span>🔍</span> Run Anomaly Detection
           </button>
           <button onclick="loadExceptions()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition flex items-center gap-1.5">
-            <span>🔄</span> Refresh Exceptions
+            <span>🔄</span> Refresh Exceptions & Impact
           </button>
         </div>
 
@@ -359,7 +388,7 @@
         </div>
       </div>
 
-      <!-- Exceptions Table -->
+      <!-- Exceptions & Impact Table -->
       <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-300">
@@ -370,11 +399,12 @@
                 <th class="py-3 px-4">Severity</th>
                 <th class="py-3 px-4">Status</th>
                 <th class="py-3 px-4">SLA Deadline</th>
+                <th class="py-3 px-4">Impact & Risk Score</th>
                 <th class="py-3 px-4">Actions</th>
               </tr>
             </thead>
             <tbody id="exceptions-tbody" class="divide-y divide-slate-800">
-              <tr><td colspan="6" class="py-6 text-center text-slate-500">No exceptions recorded. Click "Run Anomaly Detection" or log one via API.</td></tr>
+              <tr><td colspan="7" class="py-6 text-center text-slate-500">No exceptions recorded. Click "Run Anomaly Detection" or log one via API.</td></tr>
             </tbody>
           </table>
         </div>
@@ -387,6 +417,98 @@
           <button onclick="document.getElementById('exception-audit-panel').classList.add('hidden')" class="text-slate-400 hover:text-white text-xs">✕ Close</button>
         </div>
         <div id="audit-panel-content" class="space-y-2 text-xs"></div>
+      </div>
+
+      <!-- Impact Assessment Modal (Phase 10) -->
+      <div id="impact-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-5 shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <span>⚡</span> Impact Analysis & Risk Scoring Engine
+              </h3>
+              <p id="impact-modal-subtitle" class="text-xs text-slate-400 mt-0.5">Quantitative risk evaluation</p>
+            </div>
+            <button onclick="closeImpactModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+          </div>
+
+          <!-- Evaluation Results Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/60 text-center">
+              <div class="text-[11px] text-slate-400 uppercase font-semibold">Composite Risk Score</div>
+              <div id="modal-composite-score" class="text-3xl font-extrabold text-blue-400 my-1">--</div>
+              <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden mt-2">
+                <div id="modal-score-bar" class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <div id="modal-score-label" class="text-[10px] text-slate-400 mt-1">Normalized priority</div>
+            </div>
+
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/60 text-center">
+              <div class="text-[11px] text-slate-400 uppercase font-semibold">Financial Exposure</div>
+              <div id="modal-total-financial" class="text-3xl font-extrabold text-rose-400 my-1">$0.00</div>
+              <div id="modal-financial-breakdown" class="text-[10px] text-slate-400 space-y-0.5 mt-2 text-left">
+                <!-- Breakdown populated via JS -->
+              </div>
+            </div>
+
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/60 text-center flex flex-col justify-between">
+              <div>
+                <div class="text-[11px] text-slate-400 uppercase font-semibold">Impact Levels</div>
+                <div class="mt-2 space-y-1.5 text-xs text-left">
+                  <div class="flex justify-between"><span class="text-slate-400">Customer:</span> <span id="modal-customer-impact" class="font-bold">--</span></div>
+                  <div class="flex justify-between"><span class="text-slate-400">Supply Chain:</span> <span id="modal-sc-impact" class="font-bold">--</span></div>
+                  <div class="flex justify-between"><span class="text-slate-400">Customer Tier:</span> <span id="modal-customer-tier" class="font-mono text-cyan-400">--</span></div>
+                </div>
+              </div>
+              <div id="modal-escalated-pill" class="mt-2 text-[10px] py-1 px-2 rounded font-bold border border-rose-500/30 bg-rose-500/20 text-rose-300 hidden">
+                AUTO-ESCALATED
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulation / Override Form -->
+          <div class="bg-slate-800/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
+            <h4 class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+              <span>⚙️</span> Interactive Assessment Parameters & What-If Simulation
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <label class="block text-slate-400 mb-1">Delay Hours</label>
+                <input type="number" id="impact-input-delay-hours" step="0.5" min="0" placeholder="Auto-calculated" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Hourly Penalty ($/hr)</label>
+                <input type="number" id="impact-input-hourly-rate" step="10" min="0" placeholder="Default: $150/hr" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Cargo Loss (0.0 - 1.0)</label>
+                <input type="number" id="impact-input-cargo-loss" step="0.05" min="0" max="1" placeholder="e.g. 0.50 (50%)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Contractual Penalty ($)</label>
+                <input type="number" id="impact-input-penalty" step="100" min="0" placeholder="e.g. 2500" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Customer SLA Tier</label>
+                <select id="impact-input-tier" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200">
+                  <option value="">Default (From Shipment)</option>
+                  <option value="VIP">VIP (1.5x Weight)</option>
+                  <option value="ENTERPRISE">Enterprise (1.25x Weight)</option>
+                  <option value="STANDARD">Standard (1.0x)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Escalation Threshold</label>
+                <input type="number" id="impact-input-threshold" step="5" min="0" max="100" value="75" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200">
+              </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+              <button onclick="runImpactAssessmentForCurrent()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition flex items-center gap-1.5 shadow-sm">
+                <span>⚡</span> Evaluate & Run Assessment
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -934,7 +1056,25 @@
       }
     }
 
-    // TAB 4: Exceptions & Anomalies (Phase 9)
+    // TAB 4: Exceptions, Anomalies & Impact (Phases 9–10)
+    let currentModalExceptionId = null;
+    let impactAssessmentsMap = {};
+
+    async function loadImpactStats() {
+      try {
+        const resp = await authFetch("/api/v1/impact/summary/stats");
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          const s = json.data;
+          document.getElementById("stat-impact-assessed").textContent = s.total_assessed;
+          document.getElementById("stat-impact-exposure").textContent = `$${s.total_financial_exposure_usd.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+          document.getElementById("stat-impact-critical").textContent = s.critical_count;
+          document.getElementById("stat-impact-escalated").textContent = s.auto_escalated_count;
+          document.getElementById("stat-impact-avgscore").textContent = s.average_composite_score.toFixed(1);
+        }
+      } catch (e) {}
+    }
+
     async function loadExceptions() {
       if (!currentToken) return;
       const search = document.getElementById("exception-search")?.value || "";
@@ -946,13 +1086,32 @@
       if (statusFilter) url += `&status=${encodeURIComponent(statusFilter)}`;
       if (severityFilter) url += `&severity=${encodeURIComponent(severityFilter)}`;
 
+      // Load impact statistics in parallel
+      loadImpactStats();
+
       try {
-        const resp = await authFetch(url);
-        const json = await resp.json();
+        // Fetch exceptions and all existing impact assessments
+        const [excResp, impResp] = await Promise.all([
+          authFetch(url),
+          authFetch("/api/v1/impact?page=1&page_size=100"),
+        ]);
+        const json = await excResp.json();
+        const impJson = await impResp.json();
+
+        impactAssessmentsMap = {};
+        if (impResp.ok && impJson.success && impJson.data.items) {
+          impJson.data.items.forEach(a => {
+            // Store latest assessment for each exception
+            if (!impactAssessmentsMap[a.exception_id] || new Date(a.created_at) > new Date(impactAssessmentsMap[a.exception_id].created_at)) {
+              impactAssessmentsMap[a.exception_id] = a;
+            }
+          });
+        }
+
         const tbody = document.getElementById("exceptions-tbody");
-        if (resp.ok && json.success) {
+        if (excResp.ok && json.success) {
           if (json.data.items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No matching exceptions found. Click "Run Anomaly Detection" to test.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-500">No matching exceptions found. Click "Run Anomaly Detection" to test.</td></tr>';
             return;
           }
 
@@ -972,6 +1131,24 @@
 
             const shipRef = e.shipment ? `${e.shipment.external_reference} (${e.shipment.carrier_code})` : 'N/A';
 
+            // Phase 10 Impact badge rendering
+            const impact = impactAssessmentsMap[e.id];
+            let impactCell = `<button onclick="openImpactModalForException('${e.id}')" class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 hover:text-indigo-300 border border-slate-700 transition">⚡ Assess Impact</button>`;
+            if (impact) {
+              const scoreBadge = impact.composite_score >= 70 ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                                 impact.composite_score >= 40 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+              impactCell = `
+                <div class="cursor-pointer group" onclick="openImpactModalForException('${e.id}')">
+                  <div class="flex items-center gap-1.5">
+                    <span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ${scoreBadge}">${impact.composite_score.toFixed(1)}/100</span>
+                    ${impact.is_auto_escalated ? '<span class="text-[9px] px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold">AUTO-ESC</span>' : ''}
+                  </div>
+                  <div class="text-[10px] font-mono text-slate-400 mt-0.5 group-hover:text-indigo-400 transition">$${impact.financial_impact.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                </div>
+              `;
+            }
+
             return `
               <tr class="hover:bg-slate-800/40 transition">
                 <td class="py-3 px-4">
@@ -986,8 +1163,10 @@
                   <span class="px-2 py-0.5 rounded border text-[10px] ${statColor}">${e.status}</span>
                 </td>
                 <td class="py-3 px-4">${slaTag}</td>
+                <td class="py-3 px-4">${impactCell}</td>
                 <td class="py-3 px-4">
                   <div class="flex items-center gap-1.5">
+                    <button onclick="openImpactModalForException('${e.id}')" class="px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-[10px] border border-indigo-500/20 transition">⚡ Impact</button>
                     <button onclick="viewExceptionAudit('${e.id}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700 transition">Audit</button>
                     ${e.status !== 'CLOSED' && e.status !== 'RESOLVED' ? `
                       <button onclick="escalateExceptionAction('${e.id}')" class="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] border border-rose-500/20 transition">Escalate</button>
@@ -1001,6 +1180,114 @@
         }
       } catch (err) {
         showToast("Error loading exceptions: " + err.message, "error");
+      }
+    }
+
+    function closeImpactModal() {
+      document.getElementById("impact-modal").classList.add("hidden");
+      currentModalExceptionId = null;
+    }
+
+    async function openImpactModalForException(exceptionId) {
+      currentModalExceptionId = exceptionId;
+      const modal = document.getElementById("impact-modal");
+      modal.classList.remove("hidden");
+
+      // Reset modal fields while loading
+      document.getElementById("modal-composite-score").textContent = "...";
+      document.getElementById("modal-score-bar").style.width = "0%";
+      document.getElementById("modal-total-financial").textContent = "...";
+      document.getElementById("modal-financial-breakdown").innerHTML = "";
+      document.getElementById("modal-customer-impact").textContent = "...";
+      document.getElementById("modal-sc-impact").textContent = "...";
+      document.getElementById("modal-customer-tier").textContent = "...";
+      document.getElementById("modal-escalated-pill").classList.add("hidden");
+
+      try {
+        const resp = await authFetch(`/api/v1/impact/exception/${exceptionId}`);
+        const json = await resp.json();
+        if (resp.ok && json.success && json.data) {
+          renderImpactModalData(json.data);
+        } else {
+          // If no existing assessment, run initial evaluation automatically
+          await runImpactAssessmentForCurrent();
+        }
+      } catch (err) {
+        showToast("Error retrieving impact: " + err.message, "error");
+      }
+    }
+
+    function renderImpactModalData(data) {
+      document.getElementById("modal-composite-score").textContent = `${data.composite_score.toFixed(1)}/100`;
+      
+      const bar = document.getElementById("modal-score-bar");
+      bar.style.width = `${Math.min(100, data.composite_score)}%`;
+      if (data.composite_score >= 70) {
+        bar.className = "bg-rose-500 h-full rounded-full transition-all duration-500";
+      } else if (data.composite_score >= 40) {
+        bar.className = "bg-amber-500 h-full rounded-full transition-all duration-500";
+      } else {
+        bar.className = "bg-emerald-500 h-full rounded-full transition-all duration-500";
+      }
+
+      document.getElementById("modal-total-financial").textContent = `$${data.financial_impact.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+      document.getElementById("modal-financial-breakdown").innerHTML = `
+        <div>Delay penalty: <span class="text-white font-mono">$${data.delay_cost.toLocaleString()}</span></div>
+        <div>Cargo spoilage: <span class="text-white font-mono">$${data.cargo_damage_cost.toLocaleString()}</span></div>
+        <div>Contract SLA / Demurrage: <span class="text-white font-mono">$${data.contractual_penalty_cost.toLocaleString()}</span></div>
+      `;
+
+      document.getElementById("modal-customer-impact").textContent = data.customer_impact;
+      document.getElementById("modal-sc-impact").textContent = data.supply_chain_impact;
+      document.getElementById("modal-customer-tier").textContent = data.calculation_factors?.customer_tier || "STANDARD";
+
+      const escPill = document.getElementById("modal-escalated-pill");
+      if (data.is_auto_escalated) {
+        escPill.classList.remove("hidden");
+        escPill.title = data.escalation_reason || "Escalated by impact assessment";
+      } else {
+        escPill.classList.add("hidden");
+      }
+    }
+
+    async function runImpactAssessmentForCurrent() {
+      if (!currentModalExceptionId) return;
+      showToast("Calculating impact and risk score...", "info");
+
+      const delayHours = document.getElementById("impact-input-delay-hours")?.value;
+      const hourlyRate = document.getElementById("impact-input-hourly-rate")?.value;
+      const cargoLoss = document.getElementById("impact-input-cargo-loss")?.value;
+      const penalty = document.getElementById("impact-input-penalty")?.value;
+      const tier = document.getElementById("impact-input-tier")?.value;
+      const threshold = document.getElementById("impact-input-threshold")?.value;
+
+      const payload = {};
+      if (delayHours) payload.custom_delay_hours = parseFloat(delayHours);
+      if (hourlyRate) payload.custom_hourly_penalty_rate = parseFloat(hourlyRate);
+      if (cargoLoss) payload.custom_cargo_loss_pct = parseFloat(cargoLoss);
+      if (penalty) payload.custom_contractual_penalty = parseFloat(penalty);
+      if (tier) payload.customer_tier = tier;
+      if (threshold) payload.auto_escalate_threshold = parseFloat(threshold);
+
+      try {
+        const resp = await authFetch(`/api/v1/impact/assess/${currentModalExceptionId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          renderImpactModalData(json.data);
+          showToast(
+            `Impact assessed: Score ${json.data.composite_score.toFixed(1)}/100, Total: $${json.data.financial_impact.toLocaleString()}`,
+            json.data.is_auto_escalated ? "warning" : "success"
+          );
+          loadExceptions();
+        } else {
+          showToast(json.error?.message || "Impact assessment failed", "error");
+        }
+      } catch (err) {
+        showToast("Error: " + err.message, "error");
       }
     }
 

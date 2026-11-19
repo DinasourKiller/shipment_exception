@@ -36,6 +36,7 @@ from app.database.connection import check_database_health
 from app.integrations.mendix.sandbox import sandbox_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.exceptions.router import router as exceptions_router
+from app.modules.impact.router import router as impact_router
 from app.modules.roles.router import router as roles_router
 from app.modules.shipments.router import router as shipments_router
 from app.modules.tracking.router import router as tracking_router
@@ -121,6 +122,14 @@ OPENAPI_TAGS = [
     {
         "name": "Mendix Sandbox",
         "description": "Simulated Mendix REST API endpoints for external shipment ingestion and operational exception synchronization.",
+    },
+    {
+        "name": "Exception Management",
+        "description": "Operational disruption lifecycle, automated anomaly detection rules, and SLA tracking.",
+    },
+    {
+        "name": "Impact Analysis",
+        "description": "Financial loss estimation, customer SLA weighting, and automated priority escalation.",
     },
 ]
 
@@ -289,6 +298,11 @@ def create_application() -> FastAPI:
         exceptions_router,
         prefix=f"{settings.API_V1_PREFIX}/exceptions",
         tags=["Exception Management"],
+    )
+    app.include_router(
+        impact_router,
+        prefix=f"{settings.API_V1_PREFIX}/impact",
+        tags=["Impact Analysis"],
     )
     app.include_router(
         sandbox_router,
