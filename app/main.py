@@ -37,6 +37,7 @@ from app.integrations.mendix.sandbox import sandbox_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.exceptions.router import router as exceptions_router
 from app.modules.impact.router import router as impact_router
+from app.modules.notifications.router import router as notifications_router
 from app.modules.recovery.router import router as recovery_router
 from app.modules.roles.router import router as roles_router
 from app.modules.shipments.router import router as shipments_router
@@ -135,6 +136,10 @@ OPENAPI_TAGS = [
     {
         "name": "Carrier Recovery",
         "description": "Carrier proposals, dispatch orchestration, vehicle/driver allocation, and exception resolution.",
+    },
+    {
+        "name": "Notifications & Alerting",
+        "description": "Multi-channel operational notifications, unread feeds, delivery preferences, and broadcasts.",
     },
 ]
 
@@ -313,6 +318,11 @@ def create_application() -> FastAPI:
         recovery_router,
         prefix=f"{settings.API_V1_PREFIX}/recovery",
         tags=["Carrier Recovery"],
+    )
+    app.include_router(
+        notifications_router,
+        prefix=f"{settings.API_V1_PREFIX}/notifications",
+        tags=["Notifications & Alerting"],
     )
     app.include_router(
         sandbox_router,
