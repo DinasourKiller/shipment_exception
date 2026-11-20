@@ -34,6 +34,7 @@ from app.core.logging import (
 )
 from app.database.connection import check_database_health
 from app.integrations.mendix.sandbox import sandbox_router
+from app.modules.analytics.router import router as analytics_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.exceptions.router import router as exceptions_router
 from app.modules.impact.router import router as impact_router
@@ -140,6 +141,10 @@ OPENAPI_TAGS = [
     {
         "name": "Notifications & Alerting",
         "description": "Multi-channel operational notifications, unread feeds, delivery preferences, and broadcasts.",
+    },
+    {
+        "name": "Analytics & Reporting",
+        "description": "Carrier performance scorecards, root cause Pareto rankings, SLA compliance metrics, and exports.",
     },
 ]
 
@@ -323,6 +328,11 @@ def create_application() -> FastAPI:
         notifications_router,
         prefix=f"{settings.API_V1_PREFIX}/notifications",
         tags=["Notifications & Alerting"],
+    )
+    app.include_router(
+        analytics_router,
+        prefix=f"{settings.API_V1_PREFIX}/analytics",
+        tags=["Analytics & Reporting"],
     )
     app.include_router(
         sandbox_router,

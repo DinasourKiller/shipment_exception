@@ -27,7 +27,7 @@
           Shipment Exception Control Tower
           <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Testing Console</span>
         </h1>
-        <p class="text-xs text-slate-400">Interactive Web Harness (Phases 1–12)</p>
+        <p class="text-xs text-slate-400">Interactive Web Harness (Phases 1–13)</p>
       </div>
     </div>
 
@@ -90,6 +90,9 @@
     </button>
     <button onclick="switchTab('users')" id="nav-users" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>👥</span> Users & RBAC
+    </button>
+    <button onclick="switchTab('analytics')" id="nav-analytics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+      <span>📊</span> Analytics & KPIs
     </button>
     <button onclick="switchTab('diagnostics')" id="nav-diagnostics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>⚡</span> System Diagnostics
@@ -629,6 +632,94 @@
       </div>
     </section>
 
+    <!-- TAB 6: ANALYTICS, REPORTING & TRENDS (PHASE 13) -->
+    <section id="tab-analytics" class="space-y-6 hidden">
+      <!-- Actions / Export Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl">
+        <div>
+          <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+            <span>📊</span> Operational Analytics & Executive KPIs
+          </h3>
+          <p class="text-xs text-slate-400">Carrier scorecards, Pareto root cause distributions, and SLA metrics</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="downloadExceptionsCSV()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+            <span>📥</span> Export Exceptions CSV
+          </button>
+          <button onclick="loadAnalytics()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition flex items-center gap-1.5">
+            <span>🔄</span> Refresh Analytics
+          </button>
+        </div>
+      </div>
+
+      <!-- Top KPI Indicators Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-slate-800/40 border border-slate-700/60 p-4 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">SLA Compliance Rate</div>
+          <div id="analytics-sla-rate" class="text-2xl font-bold text-emerald-400 mt-1">--%</div>
+          <div id="analytics-sla-sub" class="text-[10px] text-slate-500 mt-0.5">Resolved within guaranteed deadline</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/60 p-4 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Critical SLA Adherence</div>
+          <div id="analytics-crit-sla" class="text-2xl font-bold text-blue-400 mt-1">--%</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">High / Critical exception SLA adherence</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/60 p-4 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Total Financial Damage</div>
+          <div id="analytics-financial-total" class="text-2xl font-bold text-rose-400 mt-1">$0.00</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Delays, spoilage, and contractual penalties</div>
+        </div>
+        <div class="bg-slate-800/40 border border-slate-700/60 p-4 rounded-xl">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Avg Recovery Turnaround</div>
+          <div id="analytics-avg-recovery" class="text-2xl font-bold text-purple-400 mt-1">-- hrs</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">Mean duration on dispatched recovery plans</div>
+        </div>
+      </div>
+
+      <!-- Two-Column Analytics Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Carrier Performance Scorecards (2 cols) -->
+        <div class="lg:col-span-2 bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden">
+          <div class="p-4 border-b border-slate-700/60 flex items-center justify-between">
+            <h4 class="text-xs font-semibold text-white flex items-center gap-1.5">
+              <span>🚚</span> Carrier Performance Scorecards
+            </h4>
+            <span class="text-[10px] text-slate-400">Composite operational ranking</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700/60">
+                <tr>
+                  <th class="py-2.5 px-3">Carrier</th>
+                  <th class="py-2.5 px-3">Shipments</th>
+                  <th class="py-2.5 px-3">Exceptions</th>
+                  <th class="py-2.5 px-3">On-Time %</th>
+                  <th class="py-2.5 px-3">Avg Recovery</th>
+                  <th class="py-2.5 px-3">Score & Grade</th>
+                </tr>
+              </thead>
+              <tbody id="carrier-scorecards-tbody" class="divide-y divide-slate-800">
+                <tr><td colspan="6" class="py-6 text-center text-slate-500">Loading carrier scorecards...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Root Cause Pareto Distribution (1 col) -->
+        <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
+            <h4 class="text-xs font-semibold text-white flex items-center gap-1.5">
+              <span>📉</span> Root Cause Breakdown
+            </h4>
+            <span id="analytics-most-frequent" class="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">--</span>
+          </div>
+          <div id="root-cause-list" class="space-y-2.5 text-xs">
+            <div class="py-4 text-center text-slate-500">Loading root cause metrics...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- TAB 5: DIAGNOSTICS & MENDIX SANDBOX -->
     <section id="tab-diagnostics" class="space-y-6 hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -730,7 +821,7 @@
 
     // Tab Switching
     function switchTab(tab) {
-      ['auth', 'shipments', 'tracking', 'exceptions', 'users', 'diagnostics'].forEach(t => {
+      ['auth', 'shipments', 'tracking', 'exceptions', 'users', 'analytics', 'diagnostics'].forEach(t => {
         document.getElementById(`tab-${t}`).classList.add('hidden');
         document.getElementById(`nav-${t}`).classList.remove('tab-active');
       });
@@ -741,6 +832,7 @@
       if (tab === 'tracking') populateTrackingDropdown();
       if (tab === 'exceptions') loadExceptions();
       if (tab === 'users') loadUsers();
+      if (tab === 'analytics') loadAnalytics();
       if (tab === 'diagnostics') checkHealth();
     }
 
@@ -1907,6 +1999,138 @@
         document.getElementById("mendix-preview").textContent = JSON.stringify(json, null, 2);
       } catch (err) {
         document.getElementById("mendix-preview").textContent = "Error: " + err.message;
+      }
+    }
+
+    // Phase 13: Operational Analytics, KPIs & CSV Reporting
+    async function loadAnalytics() {
+      if (!currentToken) return;
+      try {
+        const [perfRes, slaRes, rootRes, finRes] = await Promise.all([
+          authFetch("/api/v1/analytics/carrier-performance"),
+          authFetch("/api/v1/analytics/sla-compliance"),
+          authFetch("/api/v1/analytics/root-cause-distribution"),
+          authFetch("/api/v1/analytics/financial-exposure"),
+        ]);
+
+        const [perfJson, slaJson, rootJson, finJson] = await Promise.all([
+          perfRes.json(),
+          slaRes.json(),
+          rootRes.json(),
+          finRes.json(),
+        ]);
+
+        // 1. Top KPI Indicators
+        if (slaRes.ok && slaJson.success) {
+          const sla = slaJson.data;
+          document.getElementById("analytics-sla-rate").textContent = `${sla.compliance_rate_pct.toFixed(1)}%`;
+          document.getElementById("analytics-sla-sub").textContent = `${sla.resolved_within_sla} of ${sla.total_exceptions} within guaranteed SLA`;
+          document.getElementById("analytics-crit-sla").textContent = `${sla.critical_compliance_rate_pct.toFixed(1)}%`;
+        }
+
+        if (finRes.ok && finJson.success) {
+          const fin = finJson.data;
+          document.getElementById("analytics-financial-total").textContent = `$${fin.total_exposure_usd.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        }
+
+        // 2. Carrier Scorecards Table
+        if (perfRes.ok && perfJson.success) {
+          const carriers = perfJson.data.carriers || [];
+          const tbody = document.getElementById("carrier-scorecards-tbody");
+          if (carriers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No carrier operational records found.</td></tr>';
+          } else {
+            // Compute average recovery turnaround for top indicator
+            const avgHours = (carriers.reduce((sum, c) => sum + c.avg_recovery_hours, 0) / carriers.length).toFixed(1);
+            document.getElementById("analytics-avg-recovery").textContent = `${avgHours} hrs`;
+
+            tbody.innerHTML = carriers.map(c => {
+              const gradeColor = c.rating_grade === 'A' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                 c.rating_grade === 'B' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                                 c.rating_grade === 'C' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+
+              const barColor = c.performance_score >= 80 ? 'bg-emerald-500' :
+                               c.performance_score >= 65 ? 'bg-blue-500' : 'bg-amber-500';
+
+              return `
+                <tr class="hover:bg-slate-800/40 transition">
+                  <td class="py-3 px-3">
+                    <div class="font-medium text-white">${c.carrier_name}</div>
+                    <div class="text-[10px] text-slate-500 font-mono">${c.carrier_code}</div>
+                  </td>
+                  <td class="py-3 px-3 font-mono text-slate-300">${c.total_shipments}</td>
+                  <td class="py-3 px-3">
+                    <span class="text-rose-400 font-semibold">${c.exceptions_count}</span>
+                    <span class="text-[10px] text-slate-500">(${c.exception_rate_pct.toFixed(1)}%)</span>
+                  </td>
+                  <td class="py-3 px-3 font-mono text-emerald-400 font-medium">${c.on_time_delivery_pct.toFixed(1)}%</td>
+                  <td class="py-3 px-3 text-slate-300">${c.avg_recovery_hours} hrs</td>
+                  <td class="py-3 px-3">
+                    <div class="flex items-center gap-2">
+                      <span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ${gradeColor}">Grade ${c.rating_grade}</span>
+                      <div class="w-16 bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                        <div class="${barColor} h-full rounded-full" style="width: ${c.performance_score}%"></div>
+                      </div>
+                      <span class="text-[10px] font-mono text-slate-400">${c.performance_score.toFixed(0)}</span>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join("");
+          }
+        }
+
+        // 3. Root Cause Breakdown
+        if (rootRes.ok && rootJson.success) {
+          const rootData = rootJson.data;
+          document.getElementById("analytics-most-frequent").textContent = `Primary: ${rootData.most_frequent_type}`;
+          const list = document.getElementById("root-cause-list");
+          if (rootData.items.length === 0) {
+            list.innerHTML = '<div class="text-slate-500 text-center py-4">No disruption root cause history logged.</div>';
+          } else {
+            list.innerHTML = rootData.items.map(item => `
+              <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium text-slate-200">${item.exception_type}</span>
+                  <div class="text-[10px] text-slate-400">
+                    <span class="font-semibold text-white">${item.count}</span> (${item.percentage.toFixed(1)}%)
+                  </div>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-indigo-500 h-full rounded-full" style="width: ${item.percentage}%"></div>
+                </div>
+                ${item.total_financial_loss_usd > 0 ? `<div class="text-[10px] text-rose-400 font-mono">$${item.total_financial_loss_usd.toLocaleString()} loss</div>` : ''}
+              </div>
+            `).join("");
+          }
+        }
+      } catch (err) {
+        showToast("Error loading analytics: " + err.message, "error");
+      }
+    }
+
+    async function downloadExceptionsCSV() {
+      if (!currentToken) return;
+      showToast("Generating CSV report...", "info");
+      try {
+        const resp = await authFetch("/api/v1/analytics/export/exceptions-csv");
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = "operational_exceptions_report.csv";
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          showToast("Exceptions CSV report downloaded successfully", "success");
+        } else {
+          showToast("Failed to generate CSV export", "error");
+        }
+      } catch (err) {
+        showToast("CSV Download error: " + err.message, "error");
       }
     }
 
