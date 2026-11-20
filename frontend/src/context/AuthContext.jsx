@@ -92,8 +92,8 @@ export function AuthProvider({ children }) {
     } catch (e) {
       console.warn('Failed to parse auth from localStorage:', e);
     }
-    // Default to Administrator for demo readiness
-    return DEMO_USERS.admin;
+    // Default to null so user can see and use the Login page when not authenticated
+    return null;
   });
 
   useEffect(() => {
