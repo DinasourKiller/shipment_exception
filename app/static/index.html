@@ -3433,7 +3433,7 @@
     }
 
     function prependLiveAuditRow(log) {
-      const tbody = document.getElementById("audit-table-body");
+      const tbody = document.getElementById("audit-logs-tbody");
       if (!tbody) return;
       const tr = document.createElement("tr");
       tr.className = "hover:bg-slate-800/40 transition bg-indigo-950/20 border-l-2 border-indigo-500";

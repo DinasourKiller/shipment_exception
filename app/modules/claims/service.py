@@ -164,10 +164,15 @@ class ClaimService:
         if not shipment:
             raise EntityNotFoundException("Shipment", str(exc.shipment_id))
 
-        # 3. Check for existing ImpactAssessment
-        stmt_imp = select(ImpactAssessment).where(ImpactAssessment.exception_id == exc.id)
+        # 3. Check for existing ImpactAssessment (select latest if multiple exist)
+        stmt_imp = (
+            select(ImpactAssessment)
+            .where(ImpactAssessment.exception_id == exc.id)
+            .order_by(ImpactAssessment.created_at.desc())
+            .limit(1)
+        )
         res_imp = await self.session.execute(stmt_imp)
-        impact = res_imp.scalar_one_or_none()
+        impact = res_imp.scalars().first()
 
         if impact and impact.financial_impact > 0:
             claimed_amount = float(impact.financial_impact)
