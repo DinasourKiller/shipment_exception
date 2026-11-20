@@ -76,22 +76,26 @@ Produce a JSON response with EXACTLY this structure:
 
 def build_customer_communication_prompt(context: Dict[str, Any]) -> str:
     """Constructs prompt for proactive customer email notification."""
+    ref = context.get('shipment_reference', 'SHP-001')
+    cust = context.get('customer_name', 'Valued Customer')
     return f"""Draft an empathetic, transparent customer email update for this shipment delay/exception.
 
 Context:
-- Customer Name: {context.get('customer_name', 'Valued Customer')}
+- Customer Name: {cust}
 - Recipient Email: {context.get('customer_email')}
-- Shipment Reference: {context.get('shipment_reference')}
-- Origin/Destination: {context.get('origin')} to {context.get('destination')}
+- Shipment Reference: {ref}
+- Route: {context.get('origin')} to {context.get('destination')}
 - Exception Type: {context.get('exception_type')}
 - Current Status: {context.get('exception_status')}
 - Mitigation Action: {context.get('recovery_action', 'Dispatched response team to expedite delivery')}
 - Estimated Delay: {context.get('delay_hours', 0)} hours
 
+Write a complete, professional email body of at least 2-3 sentences explaining the situation and reassurance.
+
 Produce a JSON response with EXACTLY this structure:
 {{
-  "email_subject": "<professional, clear subject line with tracking reference>",
-  "email_body": "<complete 2-paragraph professional email body with greeting, situation update, mitigation steps, and reassurance>",
+  "email_subject": "Shipment Advisory: Transit Update for Order {ref}",
+  "email_body": "Dear {cust},\\n\\nWe are writing to provide a transparent update regarding shipment {ref}. Our control tower identified an operational delay and has initiated mitigation procedures to expedite delivery. Your projected delivery window is adjusted by approximately {context.get('delay_hours', 4)} hours.\\n\\nSincerely,\\nControl Tower Operations Team",
   "tone": "Empathetic & Professional"
 }}
 """

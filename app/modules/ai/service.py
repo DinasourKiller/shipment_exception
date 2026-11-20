@@ -426,14 +426,14 @@ class AIService:
 
         if raw_response:
             data = self._extract_json_from_llm(raw_response)
-            if data and "email_subject" in data and "email_body" in data:
+            if data and data.get("email_subject") and len(str(data.get("email_body", "")).strip()) >= 50:
                 try:
                     return AICustomerCommunicationResponse(
                         exception_id=exception_id,
                         customer_email=context["customer_email"],
                         customer_name=context["customer_name"],
-                        email_subject=data.get("email_subject", ""),
-                        email_body=data.get("email_body", ""),
+                        email_subject=str(data.get("email_subject", "")).strip(),
+                        email_body=str(data.get("email_body", "")).strip(),
                         tone=data.get("tone", "Empathetic & Professional"),
                         estimated_delay_hours=context.get("delay_hours"),
                         provider=f"ollama ({self.ollama.model})",
