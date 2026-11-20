@@ -38,6 +38,12 @@
         API Online
       </div>
 
+      <!-- Real-Time WebSocket Pill (Phase 16) -->
+      <div id="ws-status-pill" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700">
+        <span id="ws-status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+        <span id="ws-status-text">WS Offline</span>
+      </div>
+
       <!-- Auth profile chip -->
       <div id="user-chip" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-xs">
         <span class="text-slate-400">👤</span>
@@ -344,6 +350,31 @@
               </div>
               <button onclick="submitGpsPing()" class="w-full mt-2 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
                 <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Broadcast GPS Ping
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Real-Time Telemetry Stream Card (Phase 16) -->
+          <div class="bg-gradient-to-br from-slate-900 to-indigo-950/40 border border-indigo-500/30 rounded-xl p-5 shadow-lg space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Live Telemetry & IoT Stream
+              </h3>
+              <span id="live-stream-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">0 frames</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Incoming GPS packets, sensor temperatures, and vehicle breadcrumbs pushed via WebSocket.</p>
+            
+            <div id="live-telemetry-feed" class="max-h-48 overflow-y-auto space-y-2 text-xs font-mono bg-slate-950/80 p-3 rounded-lg border border-slate-800">
+              <div class="text-slate-500 text-center py-2 text-[11px]">Awaiting live sensor frames...</div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800 flex items-center gap-2">
+              <button onclick="triggerSimulateTelemetry()" class="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
+                <span>📡</span> Simulate IoT Ping
+              </button>
+              <button onclick="openBroadcastAlertModal()" class="py-2 px-3 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/30 text-rose-300 text-xs font-medium transition flex items-center justify-center gap-1.5 whitespace-nowrap">
+                <span>📢</span> Alert
               </button>
             </div>
           </div>
@@ -669,6 +700,40 @@
           </div>
         </div>
       </div>
+
+      <!-- Broadcast Alert Modal (Phase 16) -->
+      <div id="modal-broadcast-alert" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-rose-500/30 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h3 class="text-base font-semibold text-white flex items-center gap-2">
+              <span>📢</span> Broadcast Emergency Alert
+            </h3>
+            <button onclick="closeBroadcastAlertModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+          </div>
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Severity</label>
+              <select id="broadcast-severity" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-200">
+                <option value="CRITICAL">CRITICAL (Immediate Action)</option>
+                <option value="WARNING">WARNING (Operational Caution)</option>
+                <option value="INFO">INFO (General Announcement)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Alert Title</label>
+              <input type="text" id="broadcast-title" value="Severe Hub Weather Disruption" placeholder="e.g. Severe Winter Storm Alert" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-200">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Message Body</label>
+              <textarea id="broadcast-message" rows="3" placeholder="Provide operational impact and directives..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-slate-200">All inbound flights to Boston Logan are diverted due to gale-force winds. Ground fleet standby initiated.</textarea>
+            </div>
+          </div>
+          <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+            <button onclick="closeBroadcastAlertModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 text-xs">Cancel</button>
+            <button onclick="submitBroadcastAlert()" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold">Broadcast Frame</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- TAB 5: USERS & RBAC -->
@@ -949,6 +1014,7 @@
       try {
         if (currentToken) {
           loadShipments();
+          connectRealtimeStream();
         }
       } catch (e) { console.error("loadShipments error", e); }
     }
@@ -1063,6 +1129,7 @@
           localStorage.setItem("ct_user", JSON.stringify(currentUser));
           updateUserChip();
           loadNotifications();
+          connectRealtimeStream();
           showToast(`Logged in as ${currentUser.full_name || email}`, "success");
         } else {
           showToast(json.error?.message || "Login failed", "error");
@@ -1073,6 +1140,7 @@
     }
 
     function logout() {
+      disconnectRealtimeStream();
       currentToken = null;
       currentUser = null;
       localStorage.removeItem("ct_token");
@@ -2646,6 +2714,244 @@
         showToast("Export error: " + err.message, "error");
       }
     }
+    // }
+
+    // ==========================================
+    // Phase 16: Real-Time WebSocket Streaming
+    // ==========================================
+    let realtimeWs = null;
+    let wsPingInterval = null;
+    let liveFrameCount = 0;
+
+    function connectRealtimeStream() {
+      if (!currentToken) return;
+      if (realtimeWs && (realtimeWs.readyState === WebSocket.OPEN || realtimeWs.readyState === WebSocket.CONNECTING)) {
+        return;
+      }
+
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/stream?token=${encodeURIComponent(currentToken)}`;
+
+      updateWsStatus("connecting");
+      try {
+        realtimeWs = new WebSocket(wsUrl);
+
+        realtimeWs.onopen = () => {
+          updateWsStatus("connected");
+          clearInterval(wsPingInterval);
+          wsPingInterval = setInterval(() => {
+            if (realtimeWs && realtimeWs.readyState === WebSocket.OPEN) {
+              realtimeWs.send(JSON.stringify({ action: "ping", timestamp: new Date().toISOString() }));
+            }
+          }, 25000);
+        };
+
+        realtimeWs.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            handleRealtimeEvent(data);
+          } catch (e) {
+            console.error("Failed to parse realtime event", e);
+          }
+        };
+
+        realtimeWs.onclose = () => {
+          updateWsStatus("disconnected");
+          clearInterval(wsPingInterval);
+          if (currentToken) {
+            setTimeout(connectRealtimeStream, 5000);
+          }
+        };
+
+        realtimeWs.onerror = () => {
+          updateWsStatus("disconnected");
+        };
+      } catch (err) {
+        updateWsStatus("disconnected");
+      }
+    }
+
+    function disconnectRealtimeStream() {
+      if (wsPingInterval) clearInterval(wsPingInterval);
+      if (realtimeWs) {
+        try { realtimeWs.close(); } catch (e) {}
+        realtimeWs = null;
+      }
+      updateWsStatus("disconnected");
+    }
+
+    function updateWsStatus(state) {
+      const pill = document.getElementById("ws-status-pill");
+      const dot = document.getElementById("ws-status-dot");
+      const text = document.getElementById("ws-status-text");
+      if (!pill || !dot || !text) return;
+
+      if (state === "connected") {
+        pill.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+        text.textContent = "Live Stream (WS)";
+      } else if (state === "connecting") {
+        pill.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        dot.className = "w-2 h-2 rounded-full bg-amber-400 animate-ping";
+        text.textContent = "WS Connecting...";
+      } else {
+        pill.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-800 text-slate-400 border border-slate-700";
+        dot.className = "w-2 h-2 rounded-full bg-slate-500";
+        text.textContent = "WS Offline";
+      }
+    }
+
+    function handleRealtimeEvent(event) {
+      const eventType = event.event_type;
+      const payload = event.payload || {};
+
+      if (eventType === "TELEMETRY_RECORDED") {
+        liveFrameCount++;
+        const badge = document.getElementById("live-stream-badge");
+        if (badge) badge.textContent = `${liveFrameCount} frames`;
+
+        const feed = document.getElementById("live-telemetry-feed");
+        if (feed) {
+          if (liveFrameCount === 1) feed.innerHTML = "";
+          const div = document.createElement("div");
+          div.className = "p-2 rounded bg-slate-900 border border-indigo-500/20 text-slate-300 flex items-center justify-between text-[11px] animate-fadeIn";
+          const latVal = typeof payload.latitude === 'number' ? payload.latitude.toFixed(4) : payload.latitude;
+          const lngVal = typeof payload.longitude === 'number' ? payload.longitude.toFixed(4) : payload.longitude;
+          div.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span class="font-bold text-white">${payload.shipment_id || payload.tracking_number || "SHP"}</span>
+              <span class="text-slate-400">${latVal}, ${lngVal}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-amber-400 font-semibold">${payload.speed_mph || 0} mph</span>
+              <span class="text-blue-400">${payload.temperature_c !== undefined ? payload.temperature_c : '--'}°C</span>
+            </div>
+          `;
+          feed.prepend(div);
+          if (feed.children.length > 20) feed.removeChild(feed.lastChild);
+        }
+      } else if (eventType === "EXCEPTION_TRIGGERED" || eventType === "EXCEPTION_ESCALATED") {
+        showToast(`🚨 ${payload.severity || "EXCEPTION"}: ${payload.title || "New Exception Recorded"}`, "warning");
+        if (typeof loadExceptions === "function") loadExceptions();
+        if (typeof loadNotifications === "function") loadNotifications();
+      } else if (eventType === "RECOVERY_DISPATCHED") {
+        showToast(`🚛 Recovery Dispatched: ${payload.carrier_name || "Relief Carrier"} (${payload.driver_name || "Driver"})`, "success");
+        if (typeof loadExceptions === "function") loadExceptions();
+      } else if (eventType === "AUDIT_LOG_RECORDED") {
+        prependLiveAuditRow(payload);
+      } else if (eventType === "SYSTEM_ALERT") {
+        showToast(`📢 [${payload.severity}] ${payload.title}: ${payload.message}`, "error");
+      }
+    }
+
+    function prependLiveAuditRow(log) {
+      const tbody = document.getElementById("audit-table-body");
+      if (!tbody) return;
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-slate-800/40 transition bg-indigo-950/20 border-l-2 border-indigo-500";
+      tr.innerHTML = `
+        <td class="py-3 px-4 font-mono font-bold text-indigo-400">#${log.audit_sequence_num} <span class="text-[9px] text-emerald-400">LIVE</span></td>
+        <td class="py-3 px-4 font-mono text-[10px] text-slate-400">${formatDate(log.created_at)}</td>
+        <td class="py-3 px-4">
+          <div class="font-medium text-slate-200">${log.actor_email || 'SYSTEM'}</div>
+          <div class="text-[10px] text-slate-500">Real-Time Ingestion</div>
+        </td>
+        <td class="py-3 px-4">
+          <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold text-[10px]">
+            ${log.action}
+          </span>
+        </td>
+        <td class="py-3 px-4">
+          <div class="font-semibold text-[11px] text-slate-300">${log.resource_type}</div>
+          <div class="font-mono text-[10px] text-slate-500 truncate max-w-[120px]">${log.resource_id}</div>
+        </td>
+        <td class="py-3 px-4 text-[11px] leading-relaxed">
+          <div class="bg-slate-900/60 p-2 rounded border border-slate-800 max-w-xs overflow-x-auto text-emerald-400 font-mono text-[10px]">
+            ${JSON.stringify(log.diff_summary || {})}
+          </div>
+        </td>
+        <td class="py-3 px-4">
+          <span class="font-mono text-[10px] text-slate-400 truncate max-w-[140px] block" title="${log.record_hash}">
+            ${(log.record_hash || "").substring(0, 16)}...
+          </span>
+        </td>
+      `;
+      tbody.prepend(tr);
+    }
+
+    async function triggerSimulateTelemetry() {
+      if (!currentToken) {
+        showToast("Please log in first", "warning");
+        return;
+      }
+      showToast("Dispatching simulated IoT telemetry ping...", "info");
+      try {
+        const randLat = 41.8781 + (Math.random() - 0.5) * 0.1;
+        const randLng = -87.6298 + (Math.random() - 0.5) * 0.1;
+        const randSpeed = (50 + Math.random() * 25).toFixed(1);
+        const randTemp = (2.0 + Math.random() * 4.0).toFixed(1);
+
+        const resp = await authFetch("/api/v1/ws/simulate/telemetry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            shipment_id: "MDX-SHP-1001",
+            latitude: parseFloat(randLat.toFixed(4)),
+            longitude: parseFloat(randLng.toFixed(4)),
+            speed_mph: parseFloat(randSpeed),
+            temperature_c: parseFloat(randTemp),
+            battery_pct: 95.5,
+            status_note: "Interstate Transit Sensor Check",
+          }),
+        });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          showToast("Simulated IoT telemetry broadcasted", "success");
+        } else {
+          showToast(json.error?.message || "Failed to simulate telemetry", "error");
+        }
+      } catch (err) {
+        showToast("Simulation error: " + err.message, "error");
+      }
+    }
+
+    function openBroadcastAlertModal() {
+      document.getElementById("modal-broadcast-alert").classList.remove("hidden");
+    }
+
+    function closeBroadcastAlertModal() {
+      document.getElementById("modal-broadcast-alert").classList.add("hidden");
+    }
+
+    async function submitBroadcastAlert() {
+      if (!currentToken) return;
+      const severity = document.getElementById("broadcast-severity").value;
+      const title = document.getElementById("broadcast-title").value.trim();
+      const message = document.getElementById("broadcast-message").value.trim();
+
+      if (!title || !message) {
+        showToast("Please specify alert headline and message", "warning");
+        return;
+      }
+
+      showToast("Broadcasting alert across control tower sessions...", "info");
+      try {
+        const resp = await authFetch("/api/v1/ws/broadcast/alert", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ severity, title, message }),
+        });
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          closeBroadcastAlertModal();
+          showToast(`Alert broadcasted to ${json.data.recipients_count} active client(s)`, "success");
+        } else {
+          showToast(json.error?.message || "Broadcast failed", "error");
+        }
+      } catch (err) {
+        showToast("Alert error: " + err.message, "error");
+      }
     }
 
     // Toast notifications

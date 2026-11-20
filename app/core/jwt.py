@@ -107,5 +107,5 @@ def decode_access_token(token: str) -> Dict[str, Any]:
 
     except ExpiredSignatureError:
         raise UnauthorizedException("Access token has expired. Please refresh your session.")
-    except InvalidTokenError as exc:
+    except (InvalidTokenError, Exception) as exc:
         raise UnauthorizedException(f"Invalid access token: {str(exc)}")

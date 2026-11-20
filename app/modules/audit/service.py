@@ -119,6 +119,28 @@ class AuditService:
             action,
             rec_hash[:12],
         )
+
+        # Broadcast live audit log to auditors & admins
+        try:
+            from app.modules.realtime.broadcaster import broadcaster
+            from app.modules.realtime.schemas import CHANNEL_AUDIT_LIVE, EVENT_AUDIT_LOG_RECORDED
+            broadcaster.publish_nowait(
+                channel=CHANNEL_AUDIT_LIVE,
+                event_type=EVENT_AUDIT_LOG_RECORDED,
+                payload={
+                    "audit_sequence_num": audit_entry.audit_sequence_num,
+                    "action": audit_entry.action,
+                    "resource_type": audit_entry.resource_type,
+                    "resource_id": audit_entry.resource_id,
+                    "actor_email": audit_entry.actor_email,
+                    "created_at": audit_entry.created_at.isoformat() if audit_entry.created_at else None,
+                    "record_hash": audit_entry.record_hash,
+                    "diff_summary": audit_entry.diff_summary,
+                },
+            )
+        except Exception as b_err:
+            logger.debug("Live audit broadcast skipped: %s", b_err)
+
         return audit_entry
 
     async def list_logs(

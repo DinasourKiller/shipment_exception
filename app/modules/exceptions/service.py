@@ -165,6 +165,27 @@ class ExceptionService:
         # Notify Mendix upstream if applicable
         await self._dispatch_upstream_notification(shipment, exception)
 
+        # Broadcast real-time exception trigger to WebSocket subscribers
+        try:
+            from app.modules.realtime.broadcaster import broadcaster
+            from app.modules.realtime.schemas import CHANNEL_ALERTS_ALL, EVENT_EXCEPTION_TRIGGERED
+            broadcaster.publish_nowait(
+                channel=CHANNEL_ALERTS_ALL,
+                event_type=EVENT_EXCEPTION_TRIGGERED,
+                payload={
+                    "exception_id": str(exception.id),
+                    "shipment_id": str(exception.shipment_id),
+                    "severity": exception.severity,
+                    "exception_type": exception.exception_type,
+                    "title": exception.title,
+                    "description": exception.description,
+                    "status": exception.status,
+                    "sla_breach_at": exception.sla_breach_at.isoformat() if exception.sla_breach_at else None,
+                },
+            )
+        except Exception as b_err:
+            logger.debug("Real-time broadcast skipped: %s", b_err)
+
         # Reload with all relationship data
         return await self.repository.get_by_id(exception.id)
 
@@ -352,6 +373,25 @@ class ExceptionService:
 
         await self._dispatch_upstream_notification(exception.shipment, exception)
 
+        # Broadcast real-time exception escalation to WebSocket subscribers
+        try:
+            from app.modules.realtime.broadcaster import broadcaster
+            from app.modules.realtime.schemas import CHANNEL_ALERTS_ALL, EVENT_EXCEPTION_ESCALATED
+            broadcaster.publish_nowait(
+                channel=CHANNEL_ALERTS_ALL,
+                event_type=EVENT_EXCEPTION_ESCALATED,
+                payload={
+                    "exception_id": str(exception.id),
+                    "shipment_id": str(exception.shipment_id),
+                    "old_severity": old_severity,
+                    "new_severity": new_severity,
+                    "reason": request.reason,
+                    "status": exception.status,
+                },
+            )
+        except Exception as b_err:
+            logger.debug("Real-time broadcast skipped: %s", b_err)
+
         return await self.repository.get_by_id(exception.id)
 
     async def resolve_exception(
@@ -405,6 +445,24 @@ class ExceptionService:
             logger.debug("System audit recording skipped: %s", audit_err)
 
         await self._dispatch_upstream_notification(exception.shipment, exception)
+
+        # Broadcast real-time exception resolution to WebSocket subscribers
+        try:
+            from app.modules.realtime.broadcaster import broadcaster
+            from app.modules.realtime.schemas import CHANNEL_ALERTS_ALL, EVENT_EXCEPTION_RESOLVED
+            broadcaster.publish_nowait(
+                channel=CHANNEL_ALERTS_ALL,
+                event_type=EVENT_EXCEPTION_RESOLVED,
+                payload={
+                    "exception_id": str(exception.id),
+                    "shipment_id": str(exception.shipment_id),
+                    "status": exception.status,
+                    "root_cause": exception.root_cause,
+                    "resolution_notes": exception.resolution_notes,
+                },
+            )
+        except Exception as b_err:
+            logger.debug("Real-time broadcast skipped: %s", b_err)
 
         return await self.repository.get_by_id(exception.id)
 

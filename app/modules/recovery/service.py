@@ -283,6 +283,26 @@ class RecoveryService:
         except Exception as err:
             logger.warning("Failed to auto-update exception status on dispatch: %s", err)
 
+        # Broadcast real-time recovery dispatch to WebSocket subscribers
+        try:
+            from app.modules.realtime.broadcaster import broadcaster
+            from app.modules.realtime.schemas import CHANNEL_ALERTS_ALL, EVENT_RECOVERY_DISPATCHED
+            broadcaster.publish_nowait(
+                channel=CHANNEL_ALERTS_ALL,
+                event_type=EVENT_RECOVERY_DISPATCHED,
+                payload={
+                    "plan_id": str(plan.id),
+                    "exception_id": str(plan.exception_id),
+                    "carrier_name": plan.carrier_name,
+                    "driver_name": plan.driver_name,
+                    "vehicle_plate": plan.vehicle_plate,
+                    "estimated_arrival": plan.estimated_arrival.isoformat() if plan.estimated_arrival else None,
+                    "status": plan.status,
+                },
+            )
+        except Exception as b_err:
+            logger.debug("Real-time broadcast skipped: %s", b_err)
+
         return plan
 
     async def complete_recovery(

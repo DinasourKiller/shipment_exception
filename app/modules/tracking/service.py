@@ -109,6 +109,41 @@ class TrackingService:
         if matching_milestone and matching_milestone.planned_time:
             await self.recalculate_eta(shipment_id)
 
+        # 5. Broadcast real-time telemetry update to WebSocket subscribers
+        try:
+            from app.modules.realtime.broadcaster import broadcaster
+            from app.modules.realtime.schemas import CHANNEL_TELEMETRY_ALL, EVENT_TELEMETRY_RECORDED
+            broadcaster.publish_nowait(
+                channel=f"telemetry:{shipment_id}",
+                event_type=EVENT_TELEMETRY_RECORDED,
+                payload={
+                    "shipment_id": str(shipment_id),
+                    "tracking_number": shipment.tracking_number,
+                    "event_code": saved_event.event_code,
+                    "event_type": saved_event.event_type,
+                    "latitude": saved_event.latitude,
+                    "longitude": saved_event.longitude,
+                    "location_name": saved_event.location_name,
+                    "event_timestamp": saved_event.event_timestamp.isoformat() if saved_event.event_timestamp else None,
+                    "description": saved_event.description,
+                },
+            )
+            broadcaster.publish_nowait(
+                channel=CHANNEL_TELEMETRY_ALL,
+                event_type=EVENT_TELEMETRY_RECORDED,
+                payload={
+                    "shipment_id": str(shipment_id),
+                    "tracking_number": shipment.tracking_number,
+                    "event_code": saved_event.event_code,
+                    "latitude": saved_event.latitude,
+                    "longitude": saved_event.longitude,
+                    "location_name": saved_event.location_name,
+                    "event_timestamp": saved_event.event_timestamp.isoformat() if saved_event.event_timestamp else None,
+                },
+            )
+        except Exception as b_err:
+            logger.debug("Real-time broadcast skipped: %s", b_err)
+
         return TrackingEventResponse.model_validate(saved_event)
 
     async def _evaluate_shipment_progression(

@@ -41,6 +41,7 @@ from app.modules.authentication.router import router as auth_router
 from app.modules.exceptions.router import router as exceptions_router
 from app.modules.impact.router import router as impact_router
 from app.modules.notifications.router import router as notifications_router
+from app.modules.realtime.router import router as realtime_router
 from app.modules.recovery.router import router as recovery_router
 from app.modules.roles.router import router as roles_router
 from app.modules.shipments.router import router as shipments_router
@@ -156,6 +157,10 @@ OPENAPI_TAGS = [
         "name": "Audit & Compliance",
         "description": "Cryptographically hash-chained immutable audit trail (SHA-256), tamper verification, and forensic regulatory exports.",
     },
+    {
+        "name": "Real-Time Streaming",
+        "description": "Bidirectional WebSocket pub/sub stream for live GPS telemetry, instant operational alerts, and vehicle state tracking.",
+    },
 ]
 
 SWAGGER_DESCRIPTION = """
@@ -250,6 +255,7 @@ def create_application() -> FastAPI:
                 "database": "healthy" if db_healthy else f"unhealthy: {db_detail}",
                 "mendix_adapter": "configured",
                 "ai_provider": f"configured ({settings.OLLAMA_MODEL})",
+                "realtime_stream": "active",
             },
         )
         return ApiResponse(
@@ -353,6 +359,10 @@ def create_application() -> FastAPI:
         audit_router,
         prefix=f"{settings.API_V1_PREFIX}/audit",
         tags=["Audit & Compliance"],
+    )
+    app.include_router(
+        realtime_router,
+        prefix=settings.API_V1_PREFIX,
     )
     app.include_router(
         sandbox_router,
