@@ -103,6 +103,9 @@
     <button onclick="switchTab('audit')" id="nav-audit" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>🛡️</span> Audit & Compliance
     </button>
+    <button onclick="switchTab('claims')" id="nav-claims" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+      <span>⚖️</span> Claims & Penalties
+    </button>
     <button onclick="switchTab('diagnostics')" id="nav-diagnostics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>⚡</span> System Diagnostics
     </button>
@@ -1064,6 +1067,168 @@
       </div>
     </section>
 
+    <!-- TAB 8: CARRIER CLAIMS & SLA PENALTY SETTLEMENT ENGINE (PHASE 18) -->
+    <section id="tab-claims" class="space-y-6 hidden">
+      <!-- Financial Summary & KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Total Claims Filed</div>
+            <div id="claims-kpi-total" class="text-2xl font-bold text-white mt-1">0</div>
+            <div class="text-[10px] text-slate-500 mt-0.5"><span id="claims-kpi-open" class="text-blue-400 font-semibold">0</span> active in adjudication</div>
+          </div>
+          <div class="p-3 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xl">⚖️</div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Total Claimed Value</div>
+            <div id="claims-kpi-claimed" class="text-2xl font-bold text-amber-400 font-mono mt-1">$0.00</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">Contractual penalties assessed</div>
+          </div>
+          <div class="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xl">⚡</div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Settled Recoveries</div>
+            <div id="claims-kpi-settled" class="text-2xl font-bold text-emerald-400 font-mono mt-1">$0.00</div>
+            <div class="text-[10px] text-slate-500 mt-0.5"><span id="claims-kpi-settled-count" class="text-emerald-400 font-semibold">0</span> finalized agreements</div>
+          </div>
+          <div class="p-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xl">💰</div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Carrier Disputed</div>
+            <div id="claims-kpi-disputed" class="text-2xl font-bold text-rose-400 font-mono mt-1">$0.00</div>
+            <div class="text-[10px] text-slate-500 mt-0.5"><span id="claims-kpi-disputed-count" class="text-rose-400 font-semibold">0</span> claims contested</div>
+          </div>
+          <div class="p-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xl">🛡️</div>
+        </div>
+      </div>
+
+      <!-- Actions & Filter Toolbar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl">
+        <div class="flex items-center gap-2 flex-wrap">
+          <input type="text" id="claims-filter-carrier" oninput="loadClaims()" placeholder="Filter by Carrier Code..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
+          <select id="claims-filter-status" onchange="loadClaims()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+            <option value="">All Statuses</option>
+            <option value="SUBMITTED">SUBMITTED</option>
+            <option value="CARRIER_DISPUTED">CARRIER_DISPUTED</option>
+            <option value="SETTLED">SETTLED</option>
+            <option value="REJECTED">REJECTED</option>
+            <option value="ARBITRATION">ARBITRATION</option>
+          </select>
+          <select id="claims-filter-rule" onchange="loadClaims()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+            <option value="">All SLA Penalty Rules</option>
+            <option value="CARRIER_TRANSIT_DELAY_PENALTY">Transit Delay Penalty</option>
+            <option value="CARRIER_TEMPERATURE_DAMAGE_PENALTY">Temperature Spoilage Penalty</option>
+            <option value="CARRIER_MISROUTING_PENALTY">Misrouting Penalty</option>
+            <option value="CARRIER_LOST_CARGO_SETTLEMENT">Lost Cargo Settlement</option>
+            <option value="GENERAL_SLA_BREACH_PENALTY">General SLA Breach Penalty</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="exportClaimsCsv()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+            <span>📥</span> Export Claims CSV
+          </button>
+          <button onclick="loadClaims(); loadClaimsSummary();" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition flex items-center gap-1.5">
+            <span>🔄</span> Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Claims Ledger Table -->
+      <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700/60">
+              <tr>
+                <th class="py-3 px-4">Claim #</th>
+                <th class="py-3 px-4">Carrier & SLA Rule</th>
+                <th class="py-3 px-4">Incident / Shipment</th>
+                <th class="py-3 px-4">Claimed Value</th>
+                <th class="py-3 px-4">Counter / Settled</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="claims-tbody" class="divide-y divide-slate-800">
+              <tr><td colspan="7" class="py-6 text-center text-slate-500">Loading claims ledger...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Claim Dispute Modal -->
+      <div id="claim-dispute-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <span class="text-amber-400">🛡️</span> Contest / Dispute Claim
+            </h3>
+            <button onclick="closeClaimDisputeModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+          </div>
+          <input type="hidden" id="modal-dispute-claim-id">
+          <div>
+            <div id="modal-dispute-claim-label" class="text-xs text-slate-400 font-mono mb-2"></div>
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Dispute Justification Reason *</label>
+            <textarea id="modal-dispute-reason" rows="3" placeholder="Provide contractual defense, weather force majeure, or traffic exemptions..." class="w-full bg-slate-800/80 border border-slate-700 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"></textarea>
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Counter Offer Amount (USD, Optional)</label>
+            <input type="number" step="0.01" id="modal-dispute-counter-offer" placeholder="e.g. 250.00" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500">
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button onclick="closeClaimDisputeModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">Cancel</button>
+            <button onclick="submitClaimDisputeAction()" class="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold transition">Submit Dispute</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Claim Settlement Modal -->
+      <div id="claim-settle-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <span class="text-emerald-400">💰</span> Authorize Settlement Recovery
+            </h3>
+            <button onclick="closeClaimSettleModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+          </div>
+          <input type="hidden" id="modal-settle-claim-id">
+          <div>
+            <div id="modal-settle-claim-label" class="text-xs text-slate-400 font-mono mb-2"></div>
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Agreed Settlement Recovery (USD) *</label>
+            <input type="number" step="0.01" id="modal-settle-amount" placeholder="e.g. 500.00" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg p-2.5 text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Settlement Adjudication Notes</label>
+            <textarea id="modal-settle-notes" rows="2" placeholder="Carrier credit note agreed via commercial account review..." class="w-full bg-slate-800/80 border border-slate-700 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"></textarea>
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button onclick="closeClaimSettleModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">Cancel</button>
+            <button onclick="submitClaimSettlementAction()" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Finalize Settlement</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Claim Audit Events Timeline Modal -->
+      <div id="claim-timeline-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 id="claim-timeline-title" class="text-sm font-semibold text-white flex items-center gap-2">
+              <span>📋</span> Claim Adjudication History
+            </h3>
+            <button onclick="closeClaimTimelineModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+          </div>
+          <div id="claim-timeline-content" class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+            <div class="text-slate-500 text-center py-4">Loading audit timeline...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- TAB 5: DIAGNOSTICS & MENDIX SANDBOX -->
     <section id="tab-diagnostics" class="space-y-6 hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1166,7 +1331,7 @@
 
     // Tab Switching
     function switchTab(tab) {
-      ['auth', 'shipments', 'tracking', 'exceptions', 'users', 'analytics', 'audit', 'diagnostics'].forEach(t => {
+      ['auth', 'shipments', 'tracking', 'exceptions', 'users', 'analytics', 'audit', 'claims', 'diagnostics'].forEach(t => {
         const tabEl = document.getElementById(`tab-${t}`);
         const navEl = document.getElementById(`nav-${t}`);
         if (tabEl) tabEl.classList.add('hidden');
@@ -1183,6 +1348,7 @@
       if (tab === 'users') loadUsers();
       if (tab === 'analytics') loadAnalytics();
       if (tab === 'audit') { loadAuditLogs(); verifyAuditChain(); }
+      if (tab === 'claims') { loadClaims(); loadClaimsSummary(); }
       if (tab === 'diagnostics') checkHealth();
     }
 
@@ -1710,6 +1876,7 @@
                   <div class="flex items-center gap-1.5">
                     <button onclick="openImpactModalForException('${e.id}')" class="px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-[10px] border border-indigo-500/20 transition">⚡ Impact</button>
                     <button onclick="openRecoveryModalForException('${e.id}', '${e.title.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[10px] border border-amber-500/20 transition">🛠️ Recovery</button>
+                    <button onclick="quickFileClaim('${e.id}')" class="px-2 py-1 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] border border-blue-500/20 transition">⚖️ Claim</button>
                     <button onclick="openAIModalForException('${e.id}', '${e.title.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-[10px] border border-purple-500/20 transition">🤖 AI Ops</button>
                     <button onclick="viewExceptionAudit('${e.id}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700 transition">Audit</button>
                     ${e.status !== 'CLOSED' && e.status !== 'RESOLVED' ? `
@@ -3367,6 +3534,345 @@
         return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       } catch (e) {
         return dtStr;
+      }
+    }
+
+    // ==========================================
+    // PHASE 18: CARRIER CLAIMS & SLA SETTLEMENTS
+    // ==========================================
+    let cachedClaimsList = [];
+
+    async function loadClaimsSummary() {
+      if (!authToken) return;
+      try {
+        const res = await fetch("/api/v1/claims/summary", {
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        if (!res.ok) return;
+        const body = await res.json();
+        if (body.success && body.data) {
+          const d = body.data;
+          document.getElementById("claims-kpi-total").textContent = d.total_claims_count;
+          document.getElementById("claims-kpi-open").textContent = d.open_claims_count;
+          document.getElementById("claims-kpi-claimed").textContent = `$${d.total_claimed_amount_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          document.getElementById("claims-kpi-settled").textContent = `$${d.total_settled_amount_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          document.getElementById("claims-kpi-settled-count").textContent = d.settled_claims_count;
+          document.getElementById("claims-kpi-disputed").textContent = `$${d.total_disputed_amount_usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          document.getElementById("claims-kpi-disputed-count").textContent = d.disputed_claims_count;
+        }
+      } catch (err) {
+        console.error("Failed to load claims summary:", err);
+      }
+    }
+
+    async function loadClaims() {
+      if (!authToken) {
+        document.getElementById("claims-tbody").innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-500">Please login to view carrier claims ledger.</td></tr>';
+        return;
+      }
+
+      const carrier = (document.getElementById("claims-filter-carrier")?.value || "").trim();
+      const status = document.getElementById("claims-filter-status")?.value || "";
+      const rule = document.getElementById("claims-filter-rule")?.value || "";
+
+      let url = "/api/v1/claims?page=1&page_size=50";
+      if (carrier) url += `&carrier_code=${encodeURIComponent(carrier)}`;
+      if (status) url += `&status=${encodeURIComponent(status)}`;
+      if (rule) url += `&sla_rule_type=${encodeURIComponent(rule)}`;
+
+      try {
+        const res = await fetch(url, {
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        const tbody = document.getElementById("claims-tbody");
+        if (!res.ok) {
+          tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-rose-400">Failed to fetch claims (${res.status}).</td></tr>`;
+          return;
+        }
+        const json = await res.json();
+        if (!json.success || !json.data || json.data.items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-500">No carrier claims matching filter criteria.</td></tr>';
+          return;
+        }
+
+        cachedClaimsList = json.data.items;
+
+        tbody.innerHTML = json.data.items.map(c => {
+          let statColor = 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+          if (c.status === 'SUBMITTED') statColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+          if (c.status === 'CARRIER_DISPUTED') statColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20 font-semibold';
+          if (c.status === 'SETTLED') statColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-semibold';
+          if (c.status === 'REJECTED') statColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+          if (c.status === 'ARBITRATION') statColor = 'bg-purple-500/10 text-purple-400 border-purple-500/20 font-semibold';
+
+          const counterOrSettled = c.status === 'SETTLED'
+            ? `<span class="text-emerald-400 font-mono font-bold">$${c.settled_amount_usd.toFixed(2)}</span>`
+            : (c.counter_offer_amount_usd
+                ? `<span class="text-amber-400 font-mono font-medium">$${c.counter_offer_amount_usd.toFixed(2)} (Offer)</span>`
+                : '<span class="text-slate-500 font-mono">&mdash;</span>');
+
+          return `
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-3 px-4">
+                <div class="font-mono font-semibold text-white text-xs">${c.claim_number}</div>
+                <div class="text-[10px] text-slate-500 font-mono">${formatDate(c.created_at)}</div>
+              </td>
+              <td class="py-3 px-4">
+                <div class="font-semibold text-slate-200">${c.carrier_name || c.carrier_code}</div>
+                <div class="text-[10px] text-indigo-400 font-mono">${c.sla_rule_type}</div>
+              </td>
+              <td class="py-3 px-4">
+                <div class="text-xs text-slate-300">${c.exception_title || 'Exception Incident'}</div>
+                <div class="text-[10px] text-slate-500 font-mono">${c.shipment_reference || 'N/A'}</div>
+              </td>
+              <td class="py-3 px-4 font-mono font-semibold text-amber-400">
+                $${c.claimed_amount_usd.toFixed(2)}
+              </td>
+              <td class="py-3 px-4">
+                ${counterOrSettled}
+              </td>
+              <td class="py-3 px-4">
+                <span class="px-2 py-0.5 rounded border text-[10px] ${statColor}">${c.status}</span>
+              </td>
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                  <button onclick="viewClaimTimeline('${c.id}', '${c.claim_number}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700 transition">Timeline</button>
+                  ${(c.status === 'SUBMITTED' || c.status === 'CARRIER_DISPUTED') ? `
+                    <button onclick="openClaimDisputeModal('${c.id}', '${c.claim_number}', ${c.claimed_amount_usd})" class="px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[10px] border border-amber-500/20 transition">Dispute</button>
+                    <button onclick="openClaimSettleModal('${c.id}', '${c.claim_number}', ${c.counter_offer_amount_usd || c.claimed_amount_usd})" class="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] border border-emerald-500/20 transition">Settle</button>
+                    <button onclick="submitClaimRejection('${c.id}', '${c.claim_number}')" class="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] border border-rose-500/20 transition">Reject</button>
+                  ` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      } catch (err) {
+        console.error("Failed to load claims:", err);
+      }
+    }
+
+    async function quickFileClaim(exceptionId) {
+      if (!authToken) {
+        showToast("Please authenticate first", "warning");
+        return;
+      }
+      try {
+        const res = await fetch("/api/v1/claims/auto-from-exception", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ exception_id: exceptionId })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`Claim ${data.data.claim_number} filed for $${data.data.claimed_amount_usd.toFixed(2)}`, "success");
+          switchTab("claims");
+        } else {
+          showToast(data.message || "Failed to file claim", "error");
+        }
+      } catch (err) {
+        showToast("Network error filing claim", "error");
+      }
+    }
+
+    function openClaimDisputeModal(claimId, claimNumber, amount) {
+      document.getElementById("modal-dispute-claim-id").value = claimId;
+      document.getElementById("modal-dispute-claim-label").textContent = `Claim ${claimNumber} (Claimed: $${amount.toFixed(2)})`;
+      document.getElementById("modal-dispute-reason").value = "";
+      document.getElementById("modal-dispute-counter-offer").value = "";
+      document.getElementById("claim-dispute-modal").classList.remove("hidden");
+    }
+
+    function closeClaimDisputeModal() {
+      document.getElementById("claim-dispute-modal").classList.add("hidden");
+    }
+
+    async function submitClaimDisputeAction() {
+      const claimId = document.getElementById("modal-dispute-claim-id").value;
+      const reason = document.getElementById("modal-dispute-reason").value.trim();
+      const counterVal = document.getElementById("modal-dispute-counter-offer").value;
+      if (!reason) {
+        showToast("Please provide dispute justification reason", "warning");
+        return;
+      }
+      const payload = { dispute_reason: reason };
+      if (counterVal && !isNaN(parseFloat(counterVal))) {
+        payload.counter_offer_amount_usd = parseFloat(counterVal);
+      }
+
+      try {
+        const res = await fetch(`/api/v1/claims/${claimId}/dispute`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast("Dispute submitted successfully", "success");
+          closeClaimDisputeModal();
+          loadClaims();
+          loadClaimsSummary();
+        } else {
+          showToast(data.message || "Dispute submission failed", "error");
+        }
+      } catch (err) {
+        showToast("Network error submitting dispute", "error");
+      }
+    }
+
+    function openClaimSettleModal(claimId, claimNumber, suggestedAmount) {
+      document.getElementById("modal-settle-claim-id").value = claimId;
+      document.getElementById("modal-settle-claim-label").textContent = `Claim ${claimNumber}`;
+      document.getElementById("modal-settle-amount").value = suggestedAmount ? suggestedAmount.toFixed(2) : "";
+      document.getElementById("modal-settle-notes").value = "";
+      document.getElementById("claim-settle-modal").classList.remove("hidden");
+    }
+
+    function closeClaimSettleModal() {
+      document.getElementById("claim-settle-modal").classList.add("hidden");
+    }
+
+    async function submitClaimSettlementAction() {
+      const claimId = document.getElementById("modal-settle-claim-id").value;
+      const amountVal = document.getElementById("modal-settle-amount").value;
+      const notes = document.getElementById("modal-settle-notes").value.trim();
+
+      if (!amountVal || isNaN(parseFloat(amountVal)) || parseFloat(amountVal) < 0) {
+        showToast("Please provide a valid settlement recovery amount", "warning");
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/v1/claims/${claimId}/settle`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            settled_amount_usd: parseFloat(amountVal),
+            settlement_notes: notes || undefined
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`Claim settled for $${parseFloat(amountVal).toFixed(2)}`, "success");
+          closeClaimSettleModal();
+          loadClaims();
+          loadClaimsSummary();
+        } else {
+          showToast(data.message || "Settlement authorization failed", "error");
+        }
+      } catch (err) {
+        showToast("Network error authorizing settlement", "error");
+      }
+    }
+
+    async function submitClaimRejection(claimId, claimNumber) {
+      const reason = prompt(`Enter rejection reason for claim ${claimNumber}:`, "Invalid penalty assertion / force majeure");
+      if (!reason) return;
+
+      try {
+        const res = await fetch(`/api/v1/claims/${claimId}/reject`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ rejection_reason: reason })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`Claim ${claimNumber} rejected`, "info");
+          loadClaims();
+          loadClaimsSummary();
+        } else {
+          showToast(data.message || "Rejection failed", "error");
+        }
+      } catch (err) {
+        showToast("Network error rejecting claim", "error");
+      }
+    }
+
+    async function viewClaimTimeline(claimId, claimNumber) {
+      document.getElementById("claim-timeline-title").innerHTML = `<span>📋</span> Claim Adjudication History &mdash; <span class="font-mono text-indigo-400">${claimNumber}</span>`;
+      const contentEl = document.getElementById("claim-timeline-content");
+      contentEl.innerHTML = '<div class="text-slate-500 text-center py-4">Loading audit timeline...</div>';
+      document.getElementById("claim-timeline-modal").classList.remove("hidden");
+
+      try {
+        const res = await fetch(`/api/v1/claims/${claimId}`, {
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        if (!res.ok) {
+          contentEl.innerHTML = '<div class="text-rose-400 text-center py-4">Failed to fetch claim audit history.</div>';
+          return;
+        }
+        const json = await res.json();
+        const claim = json.data;
+        if (!claim || !claim.audit_events || claim.audit_events.length === 0) {
+          contentEl.innerHTML = '<div class="text-slate-500 text-center py-4">No audit events recorded for this claim.</div>';
+          return;
+        }
+
+        contentEl.innerHTML = claim.audit_events.map((evt, idx) => `
+          <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-[11px] font-semibold text-indigo-400">#${idx + 1} &bull; ${evt.event_type}</span>
+              <span class="text-[10px] text-slate-500 font-mono">${formatDate(evt.created_at)}</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-300">
+              <span>Actor:</span>
+              <span class="font-mono text-slate-200">${evt.actor_email}</span>
+            </div>
+            ${(evt.previous_status || evt.new_status) ? `
+              <div class="text-[11px] font-mono text-slate-400">
+                Status: <span class="text-slate-500">${evt.previous_status || 'None'}</span> &rarr; <span class="text-blue-400 font-semibold">${evt.new_status}</span>
+              </div>
+            ` : ''}
+            ${evt.notes ? `<div class="text-[11px] text-slate-400 bg-slate-900/60 p-2 rounded-lg border border-slate-800">${evt.notes}</div>` : ''}
+          </div>
+        `).join("");
+      } catch (err) {
+        contentEl.innerHTML = '<div class="text-rose-400 text-center py-4">Error loading audit events.</div>';
+      }
+    }
+
+    function closeClaimTimelineModal() {
+      document.getElementById("claim-timeline-modal").classList.add("hidden");
+    }
+
+    async function exportClaimsCsv() {
+      if (!authToken) {
+        showToast("Please authenticate first", "warning");
+        return;
+      }
+      try {
+        const res = await fetch("/api/v1/claims/export/csv", {
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        if (!res.ok) {
+          showToast(`Export failed (${res.status})`, "error");
+          return;
+        }
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `carrier_claims_ledger_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("Claims ledger CSV downloaded", "success");
+      } catch (err) {
+        showToast("Error downloading CSV", "error");
       }
     }
   </script>
