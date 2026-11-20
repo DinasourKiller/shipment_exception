@@ -94,6 +94,9 @@
     <button onclick="switchTab('analytics')" id="nav-analytics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>📊</span> Analytics & KPIs
     </button>
+    <button onclick="switchTab('audit')" id="nav-audit" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+      <span>🛡️</span> Audit & Compliance
+    </button>
     <button onclick="switchTab('diagnostics')" id="nav-diagnostics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>⚡</span> System Diagnostics
     </button>
@@ -781,6 +784,85 @@
       </div>
     </section>
 
+    <!-- TAB 7: AUDIT LOGGING & COMPLIANCE (PHASE 15) -->
+    <section id="tab-audit" class="space-y-6 hidden">
+      <!-- Integrity Status & Actions Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <span class="text-xl">🛡️</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm font-semibold text-white">Cryptographic Audit Trail</h3>
+              <span id="audit-chain-badge" class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[10px] font-semibold border border-emerald-500/20">
+                SHA-256 Hash Chained
+              </span>
+            </div>
+            <p id="audit-chain-message" class="text-xs text-slate-400 mt-0.5">Forensic tamper-evident logging conforming to regulatory non-repudiation standards</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="verifyAuditChain()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+            <span>🔍</span> Verify Cryptographic Chain
+          </button>
+          <button onclick="downloadAuditCSV()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+            <span>📥</span> Export Compliance CSV
+          </button>
+          <button onclick="loadAuditLogs()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition flex items-center gap-1.5">
+            <span>🔄</span> Refresh Logs
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters & Search -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/60 border border-slate-800 p-3 rounded-xl">
+        <div class="flex items-center gap-2 flex-wrap">
+          <input type="text" id="audit-search-actor" oninput="loadAuditLogs()" placeholder="Search by Actor Email..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
+          <select id="audit-filter-action" onchange="loadAuditLogs()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+            <option value="">All Action Types</option>
+            <option value="EXCEPTION_CREATED">EXCEPTION_CREATED</option>
+            <option value="EXCEPTION_ESCALATED">EXCEPTION_ESCALATED</option>
+            <option value="EXCEPTION_RESOLVED">EXCEPTION_RESOLVED</option>
+            <option value="RECOVERY_PLAN_CREATED">RECOVERY_PLAN_CREATED</option>
+            <option value="RECOVERY_DISPATCHED">RECOVERY_DISPATCHED</option>
+          </select>
+          <select id="audit-filter-resource" onchange="loadAuditLogs()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+            <option value="">All Resource Types</option>
+            <option value="EXCEPTION">EXCEPTION</option>
+            <option value="RECOVERY_PLAN">RECOVERY_PLAN</option>
+            <option value="SHIPMENT">SHIPMENT</option>
+            <option value="USER">USER</option>
+          </select>
+        </div>
+        <div id="audit-pagination-info" class="text-xs text-slate-400">
+          Showing 0 records
+        </div>
+      </div>
+
+      <!-- Audit Logs Table -->
+      <div class="bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700/60">
+              <tr>
+                <th class="py-3 px-3">Block #</th>
+                <th class="py-3 px-4">Timestamp (UTC)</th>
+                <th class="py-3 px-4">Actor</th>
+                <th class="py-3 px-4">Action</th>
+                <th class="py-3 px-4">Resource</th>
+                <th class="py-3 px-4">Delta / Change Diff</th>
+                <th class="py-3 px-4">SHA-256 Signature</th>
+              </tr>
+            </thead>
+            <tbody id="audit-logs-tbody" class="divide-y divide-slate-800">
+              <tr><td colspan="7" class="py-6 text-center text-slate-500">Loading audit trail...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <!-- TAB 5: DIAGNOSTICS & MENDIX SANDBOX -->
     <section id="tab-diagnostics" class="space-y-6 hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -882,18 +964,23 @@
 
     // Tab Switching
     function switchTab(tab) {
-      ['auth', 'shipments', 'tracking', 'exceptions', 'users', 'analytics', 'diagnostics'].forEach(t => {
-        document.getElementById(`tab-${t}`).classList.add('hidden');
-        document.getElementById(`nav-${t}`).classList.remove('tab-active');
+      ['auth', 'shipments', 'tracking', 'exceptions', 'users', 'analytics', 'audit', 'diagnostics'].forEach(t => {
+        const tabEl = document.getElementById(`tab-${t}`);
+        const navEl = document.getElementById(`nav-${t}`);
+        if (tabEl) tabEl.classList.add('hidden');
+        if (navEl) navEl.classList.remove('tab-active');
       });
-      document.getElementById(`tab-${tab}`).classList.remove('hidden');
-      document.getElementById(`nav-${tab}`).classList.add('tab-active');
+      const targetTab = document.getElementById(`tab-${tab}`);
+      const targetNav = document.getElementById(`nav-${tab}`);
+      if (targetTab) targetTab.classList.remove('hidden');
+      if (targetNav) targetNav.classList.add('tab-active');
 
       if (tab === 'shipments') loadShipments();
       if (tab === 'tracking') populateTrackingDropdown();
       if (tab === 'exceptions') loadExceptions();
       if (tab === 'users') loadUsers();
       if (tab === 'analytics') loadAnalytics();
+      if (tab === 'audit') { loadAuditLogs(); verifyAuditChain(); }
       if (tab === 'diagnostics') checkHealth();
     }
 
@@ -2429,6 +2516,136 @@
       } catch (err) {
         showToast("CSV Download error: " + err.message, "error");
       }
+    }
+
+    // Phase 15: Audit Logging & Regulatory Compliance Engine
+    async function loadAuditLogs() {
+      if (!currentToken) return;
+      const tbody = document.getElementById("audit-logs-tbody");
+      const actorSearch = document.getElementById("audit-search-actor")?.value || "";
+      const actionFilter = document.getElementById("audit-filter-action")?.value || "";
+      const resourceFilter = document.getElementById("audit-filter-resource")?.value || "";
+
+      let url = "/api/v1/audit/logs?page=1&page_size=50";
+      if (actorSearch) url += `&actor_email=${encodeURIComponent(actorSearch)}`;
+      if (actionFilter) url += `&action=${encodeURIComponent(actionFilter)}`;
+      if (resourceFilter) url += `&resource_type=${encodeURIComponent(resourceFilter)}`;
+
+      try {
+        const resp = await authFetch(url);
+        const json = await resp.json();
+        if (resp.ok && json.success) {
+          const data = json.data;
+          const paginationEl = document.getElementById("audit-pagination-info");
+          if (paginationEl) paginationEl.textContent = `Showing ${data.items.length} of ${data.total} total audit records`;
+
+          if (data.items.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">No audit records found matching criteria.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = data.items.map(log => {
+            const diffKeys = Object.keys(log.diff_summary || {});
+            let diffDisplay = '<span class="text-slate-500">None</span>';
+            if (diffKeys.length > 0) {
+              diffDisplay = diffKeys.map(k => {
+                const val = log.diff_summary[k];
+                if (typeof val === 'object' && val !== null && 'from' in val && 'to' in val) {
+                  return `<div><strong class="text-slate-400">${k}:</strong> <span class="text-rose-400 line-through">${val.from}</span> &rarr; <span class="text-emerald-400 font-semibold">${val.to}</span></div>`;
+                }
+                return `<div><strong class="text-slate-400">${k}:</strong> <span class="text-slate-200">${JSON.stringify(val)}</span></div>`;
+              }).join("");
+            }
+
+            return `
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="py-3 px-3 font-mono text-[11px] text-blue-400">#${log.sequence_number}</td>
+                <td class="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">${formatDate(log.created_at)}</td>
+                <td class="py-3 px-4">
+                  <div class="font-medium text-slate-200">${log.actor_email || 'SYSTEM'}</div>
+                  <div class="text-[10px] text-slate-500">${log.actor_role || 'Background Engine'}</div>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold text-[10px]">
+                    ${log.action}
+                  </span>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-semibold text-[11px] text-slate-300">${log.resource_type}</div>
+                  <div class="font-mono text-[10px] text-slate-500 truncate max-w-[120px]" title="${log.resource_id}">${log.resource_id}</div>
+                </td>
+                <td class="py-3 px-4 text-[11px] leading-relaxed">
+                  <div class="bg-slate-900/60 p-2 rounded border border-slate-800 max-w-xs overflow-x-auto">
+                    ${diffDisplay}
+                  </div>
+                </td>
+                <td class="py-3 px-4">
+                  <span class="font-mono text-[10px] text-slate-400 truncate max-w-[140px] block" title="${log.record_hash}">
+                    ${log.record_hash.substring(0, 16)}...
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join("");
+        } else {
+          showToast(json.error?.message || "Failed to load audit logs", "error");
+        }
+      } catch (err) {
+        showToast("Error loading audit logs: " + err.message, "error");
+      }
+    }
+
+    async function verifyAuditChain() {
+      if (!currentToken) return;
+      showToast("Verifying cryptographic SHA-256 chain...", "info");
+      try {
+        const resp = await authFetch("/api/v1/audit/verify");
+        const json = await resp.json();
+        const badge = document.getElementById("audit-chain-badge");
+        const msg = document.getElementById("audit-chain-message");
+
+        if (resp.ok && json.success) {
+          const d = json.data;
+          if (d.is_valid) {
+            badge.className = "px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[10px] font-semibold border border-emerald-500/20";
+            badge.textContent = `🟢 Chain Verified (${d.total_records_checked} Blocks)`;
+            msg.textContent = d.message;
+            showToast("Audit chain verified: Zero tampering detected", "success");
+          } else {
+            badge.className = "px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 font-mono text-[10px] font-semibold border border-rose-500/20";
+            badge.textContent = `🔴 Integrity Broken at Seq #${d.corrupted_sequence_number}`;
+            msg.textContent = d.message;
+            showToast(`ALERT: Tampering detected at block #${d.corrupted_sequence_number}!`, "error");
+          }
+        }
+      } catch (err) {
+        showToast("Verification error: " + err.message, "error");
+      }
+    }
+
+    async function downloadAuditCSV() {
+      if (!currentToken) return;
+      showToast("Generating regulatory audit export...", "info");
+      try {
+        const resp = await authFetch("/api/v1/audit/export/compliance-csv");
+        if (resp.ok) {
+          const blob = await resp.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = `compliance_audit_trail_${new Date().toISOString().slice(0, 10)}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          showToast("Compliance audit CSV downloaded successfully", "success");
+        } else {
+          showToast("Failed to generate compliance CSV export", "error");
+        }
+      } catch (err) {
+        showToast("Export error: " + err.message, "error");
+      }
+    }
     }
 
     // Toast notifications

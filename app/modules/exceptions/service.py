@@ -142,6 +142,26 @@ class ExceptionService:
             comment="Exception initialized",
         )
 
+        # Record cryptographically hash-chained system audit log (Phase 15)
+        try:
+            from app.modules.audit.service import AuditService
+            audit_svc = AuditService(self.session)
+            await audit_svc.record_event(
+                action="EXCEPTION_CREATED",
+                resource_type="EXCEPTION",
+                resource_id=str(exception.id),
+                actor_id=actor_id,
+                state_after={
+                    "status": exception.status,
+                    "severity": exception.severity,
+                    "type": exception.exception_type,
+                    "title": exception.title,
+                },
+                diff_summary={"created": True, "type": exception.exception_type, "severity": exception.severity},
+            )
+        except Exception as audit_err:
+            logger.debug("System audit recording skipped: %s", audit_err)
+
         # Notify Mendix upstream if applicable
         await self._dispatch_upstream_notification(shipment, exception)
 
@@ -312,6 +332,24 @@ class ExceptionService:
             comment=f"Escalated: {request.reason}",
         )
 
+        try:
+            from app.modules.audit.service import AuditService
+            audit_svc = AuditService(self.session)
+            await audit_svc.record_event(
+                action="EXCEPTION_ESCALATED",
+                resource_type="EXCEPTION",
+                resource_id=str(exception.id),
+                actor_id=actor_id,
+                state_before={"severity": old_severity, "status": old_status},
+                state_after={"severity": new_severity, "status": exception.status, "reason": request.reason},
+                diff_summary={
+                    "severity": {"from": old_severity, "to": new_severity},
+                    "status": {"from": old_status, "to": exception.status},
+                },
+            )
+        except Exception as audit_err:
+            logger.debug("System audit recording skipped: %s", audit_err)
+
         await self._dispatch_upstream_notification(exception.shipment, exception)
 
         return await self.repository.get_by_id(exception.id)
@@ -350,6 +388,21 @@ class ExceptionService:
             },
             comment=f"Resolved with root cause: {request.root_cause}",
         )
+
+        try:
+            from app.modules.audit.service import AuditService
+            audit_svc = AuditService(self.session)
+            await audit_svc.record_event(
+                action="EXCEPTION_RESOLVED",
+                resource_type="EXCEPTION",
+                resource_id=str(exception.id),
+                actor_id=actor_id,
+                state_before={"status": old_status},
+                state_after={"status": exception.status, "root_cause": exception.root_cause},
+                diff_summary={"status": {"from": old_status, "to": exception.status}},
+            )
+        except Exception as audit_err:
+            logger.debug("System audit recording skipped: %s", audit_err)
 
         await self._dispatch_upstream_notification(exception.shipment, exception)
 

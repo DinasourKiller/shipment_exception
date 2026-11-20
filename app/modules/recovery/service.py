@@ -120,6 +120,26 @@ class RecoveryService:
             },
             comment=f"Drafted recovery plan ({saved.plan_type}) with carrier {saved.carrier_name}",
         )
+
+        try:
+            from app.modules.audit.service import AuditService
+            audit_svc = AuditService(self.session)
+            await audit_svc.record_event(
+                action="RECOVERY_PLAN_CREATED",
+                resource_type="RECOVERY_PLAN",
+                resource_id=str(saved.id),
+                actor_id=actor_id,
+                state_after={
+                    "status": saved.status,
+                    "plan_type": saved.plan_type,
+                    "carrier_code": saved.carrier_code,
+                    "estimated_cost": saved.estimated_cost,
+                },
+                diff_summary={"created": True, "plan_type": saved.plan_type, "carrier": saved.carrier_code},
+            )
+        except Exception as audit_err:
+            logger.debug("System audit recording skipped: %s", audit_err)
+
         logger.info("Created recovery plan %s for exception %s", saved.id, exception.id)
         return saved
 
@@ -227,6 +247,21 @@ class RecoveryService:
             },
             comment=f"Dispatched driver {plan.driver_name} (Plate: {plan.vehicle_plate})",
         )
+
+        try:
+            from app.modules.audit.service import AuditService
+            audit_svc = AuditService(self.session)
+            await audit_svc.record_event(
+                action="RECOVERY_DISPATCHED",
+                resource_type="RECOVERY_PLAN",
+                resource_id=str(plan.id),
+                actor_id=actor_id,
+                state_before={"status": old_status},
+                state_after={"status": plan.status, "driver": plan.driver_name, "plate": plan.vehicle_plate},
+                diff_summary={"status": {"from": old_status, "to": plan.status}, "driver": plan.driver_name},
+            )
+        except Exception as audit_err:
+            logger.debug("System audit recording skipped: %s", audit_err)
 
         # Hook: Advance underlying exception to RESOLVING
         try:

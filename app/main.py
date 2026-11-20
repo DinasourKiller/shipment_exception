@@ -36,6 +36,7 @@ from app.database.connection import check_database_health
 from app.integrations.mendix.sandbox import sandbox_router
 from app.modules.ai.router import router as ai_router
 from app.modules.analytics.router import router as analytics_router
+from app.modules.audit.router import router as audit_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.exceptions.router import router as exceptions_router
 from app.modules.impact.router import router as impact_router
@@ -150,6 +151,10 @@ OPENAPI_TAGS = [
     {
         "name": "AI & Diagnostics",
         "description": "Local Ollama LLM integration, root cause diagnosis, recovery recommendations, and proactive customer communications.",
+    },
+    {
+        "name": "Audit & Compliance",
+        "description": "Cryptographically hash-chained immutable audit trail (SHA-256), tamper verification, and forensic regulatory exports.",
     },
 ]
 
@@ -343,6 +348,11 @@ def create_application() -> FastAPI:
         ai_router,
         prefix=f"{settings.API_V1_PREFIX}/ai",
         tags=["AI & Diagnostics"],
+    )
+    app.include_router(
+        audit_router,
+        prefix=f"{settings.API_V1_PREFIX}/audit",
+        tags=["Audit & Compliance"],
     )
     app.include_router(
         sandbox_router,
