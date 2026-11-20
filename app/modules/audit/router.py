@@ -31,6 +31,12 @@ def get_audit_service(session: AsyncSession = Depends(get_db_session)) -> AuditS
     summary="List paginated forensic audit records",
     description="Returns cryptographically hash-chained audit logs with optional filtering by action, resource, or actor.",
 )
+@router.get(
+    "",
+    response_model=ApiResponse[PaginatedAuditLogsResponse],
+    status_code=status.HTTP_200_OK,
+    include_in_schema=False,
+)
 async def list_audit_logs(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=200, description="Page size"),

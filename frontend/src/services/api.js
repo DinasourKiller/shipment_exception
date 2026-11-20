@@ -1,6 +1,6 @@
 /**
- * BRIDGES Control Tower - API Client & WebSocket Service
- * Connects React UI to FastAPI backend endpoints (/api/v1)
+ * BRIDGES Control Tower - Centralized API Service & WebSocket Client
+ * Configured across all 20 modular backend architecture domains.
  */
 
 const API_BASE = '/api/v1';
@@ -12,6 +12,7 @@ class ApiService {
     this.wsListeners = new Set();
     this.wsStatusListeners = new Set();
     this.wsReconnectTimer = null;
+    this.pingInterval = null;
   }
 
   setToken(token) {
@@ -48,7 +49,6 @@ class ApiService {
       });
 
       if (response.status === 401) {
-        // Clear token if expired or unauthorized
         this.setToken(null);
       }
 
@@ -75,9 +75,10 @@ class ApiService {
     }
   }
 
-  // --- Authentication ---
+  // ==========================================================================
+  // 1. AUTHENTICATION & ACCESS CONTROL
+  // ==========================================================================
   async login(email, password) {
-    // Map demo emails to seeded backend accounts if needed
     let backendEmail = email;
     let backendPass = password;
 
@@ -116,14 +117,18 @@ class ApiService {
   async logout() {
     try {
       await this.request('/auth/logout', { method: 'POST' });
-    } catch (e) {
-      // Ignore
-    }
+    } catch (e) {}
     this.setToken(null);
     this.disconnectWebSocket();
   }
 
-  // --- System Diagnostics & Health ---
+  async getMe() {
+    return this.request('/auth/me');
+  }
+
+  // ==========================================================================
+  // 2. SYSTEM DIAGNOSTICS & PROBES
+  // ==========================================================================
   async getHealth() {
     return this.request('/health');
   }
@@ -132,7 +137,9 @@ class ApiService {
     return this.request('/ping');
   }
 
-  // --- Shipments ---
+  // ==========================================================================
+  // 3. SHIPMENTS & MENDIX INGESTION
+  // ==========================================================================
   async getShipments(params = {}) {
     const q = new URLSearchParams(params).toString();
     return this.request(`/shipments${q ? '?' + q : ''}`);
@@ -146,9 +153,22 @@ class ApiService {
     return this.request(`/shipments/sync/${trackingRef}`, { method: 'POST' });
   }
 
-  // --- Tracking & Telemetry ---
+  async updateShipmentStatus(id, newStatus, location = '') {
+    return this.request(`/shipments/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: newStatus, location }),
+    });
+  }
+
+  // ==========================================================================
+  // 4. TRACKING & MILESTONES
+  // ==========================================================================
   async getTrackingTimeline(shipmentId) {
     return this.request(`/tracking/${shipmentId}/timeline`);
+  }
+
+  async getLatestTracking(shipmentId) {
+    return this.request(`/tracking/${shipmentId}/latest`);
   }
 
   async postTrackingEvent(shipmentId, eventData) {
@@ -158,7 +178,9 @@ class ApiService {
     });
   }
 
-  // --- Exceptions ---
+  // ==========================================================================
+  // 5. EXCEPTION MANAGEMENT & SLA
+  // ==========================================================================
   async getExceptions(params = {}) {
     const q = new URLSearchParams(params).toString();
     return this.request(`/exceptions${q ? '?' + q : ''}`);
@@ -182,34 +204,53 @@ class ApiService {
     });
   }
 
-  // --- Financial & SLA Impact Analysis ---
+  async detectAnomalies(shipmentId) {
+    return this.request(`/exceptions/detect-anomalies/${shipmentId}`, { method: 'POST' });
+  }
+
+  // ==========================================================================
+  // 6. FINANCIAL & CUSTOMER IMPACT ANALYSIS
+  // ==========================================================================
   async assessImpact(exceptionId) {
     return this.request(`/impact/assess/${exceptionId}`, { method: 'POST' });
   }
 
-  // --- AI Diagnostics ---
-  async analyzeRootCause(exceptionId) {
-    return this.request(`/ai/root-cause-analysis`, {
-      method: 'POST',
-      body: JSON.stringify({ exception_id: exceptionId }),
-    });
+  async getImpactForException(exceptionId) {
+    return this.request(`/impact/exception/${exceptionId}`);
   }
 
-  async draftCustomerAdvisory(payload) {
-    return this.request(`/ai/draft-customer-advisory`, {
+  async getImpactSummaryStats() {
+    return this.request('/impact/summary/stats');
+  }
+
+  // ==========================================================================
+  // 7. AI DIAGNOSTICS (LOCAL OLLAMA / GEMMA 2)
+  // ==========================================================================
+  async analyzeRootCause(exceptionId) {
+    return this.request(`/ai/root-cause/${exceptionId}`, { method: 'POST' });
+  }
+
+  async recommendRecovery(exceptionId) {
+    return this.request(`/ai/recommend-recovery/${exceptionId}`, { method: 'POST' });
+  }
+
+  async draftCustomerAdvisory(exceptionId, payload = {}) {
+    return this.request(`/ai/draft-communication/${exceptionId}`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   }
 
-  // --- Carrier Recovery & Tenders ---
+  // ==========================================================================
+  // 8. CARRIER RECOVERY OPERATIONS & TENDERS
+  // ==========================================================================
   async getRecoveryPlans(params = {}) {
     const q = new URLSearchParams(params).toString();
     return this.request(`/recovery${q ? '?' + q : ''}`);
   }
 
   async createRecoveryPlan(planData) {
-    return this.request(`/recovery`, {
+    return this.request('/recovery', {
       method: 'POST',
       body: JSON.stringify(planData),
     });
@@ -219,14 +260,27 @@ class ApiService {
     return this.request(`/recovery/${planId}/dispatch`, { method: 'POST' });
   }
 
-  // --- Claims & SLA Settlement Engine (Phase 18) ---
+  async respondToCarrierProposal(planId, payload) {
+    return this.request(`/recovery/${planId}/carrier-respond`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // ==========================================================================
+  // 9. CLAIMS & SLA SETTLEMENT ENGINE (Phase 18)
+  // ==========================================================================
   async getClaims(params = {}) {
     const q = new URLSearchParams(params).toString();
     return this.request(`/claims${q ? '?' + q : ''}`);
   }
 
+  async getClaimsSummary() {
+    return this.request('/claims/summary');
+  }
+
   async createClaimFromException(exceptionId) {
-    return this.request(`/claims/auto-from-exception`, {
+    return this.request('/claims/auto-from-exception', {
       method: 'POST',
       body: JSON.stringify({ exception_id: exceptionId }),
     });
@@ -246,69 +300,162 @@ class ApiService {
     });
   }
 
-  // --- Geofencing & Dynamic Corridors (Phase 19) ---
+  async exportClaimsCsv() {
+    return this.request('/claims/export/csv');
+  }
+
+  // ==========================================================================
+  // 10. GEOFENCING & DYNAMIC CORRIDORS (Phase 19)
+  // ==========================================================================
   async getGeofences(params = {}) {
     const q = new URLSearchParams(params).toString();
     return this.request(`/geofences${q ? '?' + q : ''}`);
   }
 
   async evaluateGeofence(telemetryData) {
-    return this.request(`/geofences/evaluate`, {
+    return this.request('/geofences/evaluate', {
       method: 'POST',
       body: JSON.stringify(telemetryData),
     });
   }
 
-  // --- Electronic Proof of Delivery & OTP (Phase 17) ---
-  async generateDeliveryOTP(shipmentId) {
-    return this.request(`/delivery/otp/generate`, {
+  async createCircularGeofence(data) {
+    return this.request('/geofences/circle', {
       method: 'POST',
-      body: JSON.stringify({ shipment_id: shipmentId }),
+      body: JSON.stringify(data),
     });
   }
 
-  async confirmDeliveryPOD(payload) {
-    return this.request(`/delivery/pod`, {
+  async createPolygonGeofence(data) {
+    return this.request('/geofences/polygon', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // ==========================================================================
+  // 11. ELECTRONIC PROOF OF DELIVERY & OTP (Phase 17)
+  // ==========================================================================
+  async generateDeliveryOTP(shipmentId) {
+    // Both aliases supported by backend
+    return this.request(`/deliveries/shipments/${shipmentId}/otp/generate`, {
+      method: 'POST',
+    });
+  }
+
+  async confirmDeliveryPOD(shipmentIdOrPayload, maybePayload) {
+    const shipmentId = maybePayload ? shipmentIdOrPayload : (shipmentIdOrPayload?.shipment_id || 'SHP-9821');
+    const body = maybePayload || shipmentIdOrPayload;
+    return this.request(`/deliveries/shipments/${shipmentId}/pod`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getDeliveryHistory(shipmentId) {
+    return this.request(`/deliveries/shipments/${shipmentId}/history`);
+  }
+
+  // ==========================================================================
+  // 12. CRYPTOGRAPHIC AUDIT TRAIL (Phase 14)
+  // ==========================================================================
+  async getAuditLogs(params = {}) {
+    const q = new URLSearchParams(params).toString();
+    return this.request(`/audit/logs${q ? '?' + q : ''}`);
+  }
+
+  async verifyAuditChain() {
+    return this.request('/audit/verify');
+  }
+
+  async exportAuditCsv() {
+    return this.request('/audit/export/compliance-csv');
+  }
+
+  // ==========================================================================
+  // 13. OPERATIONAL ANALYTICS & SCORECARDS
+  // ==========================================================================
+  async getCarrierPerformance() {
+    return this.request('/analytics/carrier-performance');
+  }
+
+  async getFinancialExposure() {
+    return this.request('/analytics/financial-exposure');
+  }
+
+  async getRootCauseDistribution() {
+    return this.request('/analytics/root-cause-distribution');
+  }
+
+  async getSlaCompliance() {
+    return this.request('/analytics/sla-compliance');
+  }
+
+  async exportExceptionsCsv() {
+    return this.request('/analytics/export/exceptions-csv');
+  }
+
+  // ==========================================================================
+  // 14. MULTI-CHANNEL NOTIFICATIONS
+  // ==========================================================================
+  async getNotifications() {
+    return this.request('/notifications');
+  }
+
+  async markNotificationRead(id) {
+    return this.request(`/notifications/${id}/read`, { method: 'PATCH' });
+  }
+
+  async markAllNotificationsRead() {
+    return this.request('/notifications/mark-all-read', { method: 'POST' });
+  }
+
+  async broadcastAlert(payload) {
+    return this.request('/notifications/broadcast', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   }
 
-  // --- Cryptographic Audit Trail (Phase 14) ---
-  async getAuditLogs(params = {}) {
+  // ==========================================================================
+  // 15. ENTERPRISE USERS & RBAC GOVERNANCE
+  // ==========================================================================
+  async getUsers(params = {}) {
     const q = new URLSearchParams(params).toString();
-    return this.request(`/audit${q ? '?' + q : ''}`);
+    return this.request(`/users${q ? '?' + q : ''}`);
   }
 
-  async verifyAuditChain() {
-    return this.request(`/audit/verify`);
+  async createUser(payload) {
+    return this.request('/users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   }
 
-  // --- Analytics & Reports ---
-  async getAnalyticsOverview() {
-    return this.request(`/analytics/overview`);
+  async updateUserStatus(userId, isActive) {
+    return this.request(`/users/${userId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_active: isActive }),
+    });
   }
 
-  async getCarrierScorecards() {
-    return this.request(`/analytics/carriers`);
-  }
-
-  // --- Notifications ---
-  async getNotifications() {
-    return this.request(`/notifications`);
-  }
-
-  // --- Users & Roles ---
-  async getUsers() {
-    return this.request('/users');
+  async resetUserPassword(userId, newPassword) {
+    return this.request(`/users/${userId}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ new_password: newPassword }),
+    });
   }
 
   async getRoles() {
     return this.request('/roles');
   }
 
+  async getPermissions() {
+    return this.request('/roles/permissions');
+  }
+
   // ==========================================================================
-  // REAL-TIME WEBSOCKET STREAMING ENGINE
+  // 16. BIDIRECTIONAL WEBSOCKET PUB/SUB STREAMING
   // ==========================================================================
   async connectWebSocket(onMessage, onStatusChange) {
     if (onMessage) this.wsListeners.add(onMessage);
@@ -318,7 +465,6 @@ class ApiService {
       return;
     }
 
-    // Ensure valid JWT token for authenticated WebSocket handshake
     if (!this.token) {
       this.token = localStorage.getItem('BRIDGES_ACCESS_TOKEN');
     }
@@ -332,7 +478,6 @@ class ApiService {
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // If running on Vite dev server (port 3000), target backend on 8000 directly
     const isPort3000 = window.location.port === '3000';
     const host = isPort3000 ? '127.0.0.1:8000' : window.location.host;
     const tokenParam = this.token ? `?token=${encodeURIComponent(this.token)}` : '';
@@ -348,7 +493,6 @@ class ApiService {
           this.wsReconnectTimer = null;
         }
 
-        // Keepalive ping interval every 20 seconds
         if (this.pingInterval) clearInterval(this.pingInterval);
         this.pingInterval = setInterval(() => {
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
@@ -377,7 +521,6 @@ class ApiService {
           this.pingInterval = null;
         }
         this.ws = null;
-        // Auto-reconnect after 4s
         if (!this.wsReconnectTimer) {
           this.wsReconnectTimer = setTimeout(() => {
             this.wsReconnectTimer = null;
