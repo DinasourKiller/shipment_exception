@@ -95,11 +95,19 @@ class ApiService {
     } else if (emailLower === 'carrier@gmail.com') {
       backendEmail = 'carrier@controltower.corp';
       backendPass = 'Password123!';
-    } else if (emailLower === 'warehouse@gmail.com' || emailLower === 'manager@gmail.com') {
-      backendEmail = 'manager@controltower.corp';
+    } else if (emailLower === 'warehouse@gmail.com') {
+      backendEmail = 'warehouse@controltower.corp';
       backendPass = 'Password123!';
-    } else if (emailLower === 'cs@gmail.com' || emailLower === 'customer@gmail.com') {
-      backendEmail = 'analyst@controltower.corp';
+    } else if (emailLower === 'cs@gmail.com') {
+      backendEmail = 'support@controltower.corp';
+      backendPass = 'Password123!';
+    } else if (emailLower === 'customer@gmail.com') {
+      backendEmail = 'customer@controltower.corp';
+      backendPass = 'Password123!';
+    }
+
+    // Auto-map password '1' to Password123! for test convenience on backend seeded accounts
+    if (backendPass === '1' && backendEmail.endsWith('@controltower.corp')) {
       backendPass = 'Password123!';
     }
 

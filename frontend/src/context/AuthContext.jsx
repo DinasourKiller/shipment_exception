@@ -6,64 +6,74 @@ const AUTH_STORAGE_KEY = 'BRIDGES_AUTH_USER_v1';
 export const DEMO_USERS = {
   admin: {
     id: 'USR-101',
-    name: 'Bima Ary',
-    email: 'admin@gmail.com',
+    name: 'Sarah Connor',
+    email: 'admin@controltower.corp',
     role: 'Administrator',
-    title: 'Bridges Coordinator',
+    title: 'Chief Platform Administrator',
     phone: '+1 (555) 019-2834',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
     defaultRoute: 'dashboard',
   },
   analyst: {
     id: 'USR-102',
-    name: 'Sarah Lin',
-    email: 'cta@gmail.com',
+    name: 'Alex Mercer',
+    email: 'analyst@controltower.corp',
     role: 'Control Tower Analyst',
     title: 'Lead Operations Analyst',
     phone: '+1 (555) 019-7462',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
     defaultRoute: 'analyst_dashboard',
   },
   dispatcher: {
     id: 'USR-104',
-    name: 'Elena Rostova',
-    email: 'dispatcher@gmail.com',
+    name: 'Marcus Vance',
+    email: 'dispatcher@controltower.corp',
     role: 'Dispatcher / Transport Planner',
     title: 'Highway Corridor Dispatcher',
     phone: '+1 (555) 019-9381',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
     defaultRoute: 'dispatcher_dashboard',
+  },
+  manager: {
+    id: 'USR-107',
+    name: 'Elena Rostova',
+    email: 'manager@controltower.corp',
+    role: 'Operations Manager',
+    title: 'Regional Operations Manager',
+    phone: '+1 (555) 019-4412',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80',
+    defaultRoute: 'dashboard',
   },
   carrier: {
     id: 'USR-103',
-    name: 'Marcus Vance',
-    email: 'carrier@gmail.com',
+    name: 'Dave Batista',
+    email: 'carrier@controltower.corp',
     role: 'Carrier Operations User',
     title: 'Carrier Fleet Dispatcher',
     carrierId: 'CAR-01',
     carrierName: 'Bridges Global Logistics',
     phone: '+1 (555) 019-5519',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
     defaultRoute: 'carrier_dashboard',
   },
   warehouse: {
     id: 'USR-105',
-    name: 'Carlos Mendoza',
-    email: 'warehouse@gmail.com',
+    name: 'John Miller',
+    email: 'warehouse@controltower.corp',
     role: 'Warehouse Supervisor',
     title: 'Dallas Hub Supervisor',
     warehouseId: 'WH-DAL-01',
     warehouseName: 'Dallas Central Logistics Hub',
     phone: '+1 (555) 019-4820',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80',
     defaultRoute: 'warehouse_dashboard',
   },
   cs: {
     id: 'USR-106',
-    name: 'Clara Hughes',
-    email: 'cs@gmail.com',
+    name: 'Emily Clark',
+    email: 'support@controltower.corp',
     role: 'Customer Service',
-    title: 'Senior Care Specialist',
+    title: 'Senior Consignment Specialist',
     phone: '+1 (555) 019-3392',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
     defaultRoute: 'cs_dashboard',
@@ -71,7 +81,7 @@ export const DEMO_USERS = {
   customer: {
     id: 'USR-109',
     name: 'Sarah Jenkins',
-    email: 'customer@gmail.com',
+    email: 'customer@controltower.corp',
     role: 'Customer',
     title: 'Supply Chain Director',
     customerId: 'CUST-BIO-01',
@@ -167,6 +177,24 @@ export function AuthProvider({ children }) {
           defaultRoute: 'dashboard',
         };
       }
+    }
+
+    // Fetch verified profile from backend if access token is active
+    try {
+      const meRes = await api.getMe();
+      if (meRes.ok && meRes.data?.data) {
+        const me = meRes.data.data;
+        const rawName = me.full_name || '';
+        const cleanName = rawName.replace(/\s*\(.*?\)/, '').trim() || rawName;
+        matched = {
+          ...(matched || {}),
+          id: me.id,
+          name: cleanName || (matched && matched.name) || cleanEmail.split('@')[0],
+          email: me.email || cleanEmail,
+        };
+      }
+    } catch (e) {
+      console.warn('Could not query /auth/me profile:', e);
     }
 
     setUser(matched);
