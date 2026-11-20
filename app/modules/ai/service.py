@@ -83,10 +83,22 @@ class AIService:
         temp_min = raw_meta.get("temp_min_c", 2.0 if is_temp else None)
         temp_max = raw_meta.get("temp_max_c", 8.0 if is_temp else None)
 
+        # Determine customer tier and impact factors safely
+        customer_tier = "STANDARD"
+        delay_hrs = 4.0
+        fin_impact = 0.0
+        p_score = 50.0
+
+        if impact:
+            fin_impact = impact.financial_impact or 0.0
+            p_score = impact.composite_score or 50.0
+            if impact.calculation_factors:
+                customer_tier = impact.calculation_factors.get("customer_tier", "STANDARD")
+                delay_hrs = float(impact.calculation_factors.get("delay_hours", 4.0))
+
         # Determine parties
         customer_name = "Valued Logistics Client"
         customer_email = "customer.service@logistics-client.com"
-        customer_tier = impact.customer_tier if impact else "STANDARD"
 
         if shipment and shipment.parties:
             for party in shipment.parties:
@@ -116,9 +128,9 @@ class AIService:
             "customer_name": customer_name,
             "customer_email": customer_email,
             "customer_tier": customer_tier,
-            "estimated_financial_impact": impact.total_financial_impact_usd if impact else 0.0,
-            "priority_score": impact.composite_priority_score if impact else 50.0,
-            "delay_hours": impact.delay_hours if impact else 4.0,
+            "estimated_financial_impact": fin_impact,
+            "priority_score": p_score,
+            "delay_hours": delay_hrs,
         }
         return context
 
