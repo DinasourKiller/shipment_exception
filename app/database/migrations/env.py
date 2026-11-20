@@ -19,6 +19,8 @@ from app.modules.exceptions.models import ExceptionAuditLog, ShipmentException
 from app.modules.impact.models import ImpactAssessment
 from app.modules.notifications.models import Notification, NotificationPreference
 from app.modules.recovery.models import RecoveryAuditLog, RecoveryPlan
+from app.modules.audit.models import SystemAuditLog
+from app.modules.delivery.models import DeliveryAttempt, DeliveryOtp, ProofOfDelivery
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

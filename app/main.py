@@ -38,6 +38,7 @@ from app.modules.ai.router import router as ai_router
 from app.modules.analytics.router import router as analytics_router
 from app.modules.audit.router import router as audit_router
 from app.modules.authentication.router import router as auth_router
+from app.modules.delivery.router import router as delivery_router
 from app.modules.exceptions.router import router as exceptions_router
 from app.modules.impact.router import router as impact_router
 from app.modules.notifications.router import router as notifications_router
@@ -160,6 +161,10 @@ OPENAPI_TAGS = [
     {
         "name": "Real-Time Streaming",
         "description": "Bidirectional WebSocket pub/sub stream for live GPS telemetry, instant operational alerts, and vehicle state tracking.",
+    },
+    {
+        "name": "Delivery & Proof of Delivery",
+        "description": "Electronic Proof of Delivery (e-POD), digital signature capture, photo verification, time-bound OTP release, and delivery attempt reconciliation.",
     },
 ]
 
@@ -359,6 +364,10 @@ def create_application() -> FastAPI:
         audit_router,
         prefix=f"{settings.API_V1_PREFIX}/audit",
         tags=["Audit & Compliance"],
+    )
+    app.include_router(
+        delivery_router,
+        prefix=settings.API_V1_PREFIX,
     )
     app.include_router(
         realtime_router,
