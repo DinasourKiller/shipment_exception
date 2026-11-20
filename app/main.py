@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.common.constants import CORRELATION_ID_HEADER
@@ -397,6 +398,18 @@ def create_application() -> FastAPI:
         sandbox_router,
         prefix=settings.API_V1_PREFIX,
     )
+
+    # Mount React Production Build if present
+    frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+    if os.path.exists(frontend_dist):
+        assets_dir = os.path.join(frontend_dist, "assets")
+        if os.path.exists(assets_dir):
+            app.mount("/assets", StaticFiles(directory=assets_dir), name="react-assets")
+
+        @app.get("/app", response_class=FileResponse, include_in_schema=False)
+        @app.get("/app/{full_path:path}", response_class=FileResponse, include_in_schema=False)
+        async def serve_react_app(full_path: str = ""):
+            return FileResponse(os.path.join(frontend_dist, "index.html"))
 
     # Web Testing Console routes
     @app.get("/console", response_class=FileResponse, include_in_schema=False)
