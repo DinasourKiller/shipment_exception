@@ -144,6 +144,31 @@ class TrackingService:
         except Exception as b_err:
             logger.debug("Real-time broadcast skipped: %s", b_err)
 
+        # 6. Phase 19: Spatial Geofencing, Dynamic Corridors & Dwell Anomaly Evaluation
+        if request.latitude is not None and request.longitude is not None:
+            try:
+                from app.modules.geofence.schemas import SpatialEvaluationRequest
+                from app.modules.geofence.service import GeofenceService
+                geo_svc = GeofenceService(self.session)
+                speed = 0.0
+                if request.raw_payload and "speed_kmh" in request.raw_payload:
+                    try:
+                        speed = float(request.raw_payload["speed_kmh"])
+                    except (ValueError, TypeError):
+                        pass
+                await geo_svc.evaluate_shipment_spatial_telemetry(
+                    SpatialEvaluationRequest(
+                        shipment_id=shipment_id,
+                        latitude=request.latitude,
+                        longitude=request.longitude,
+                        speed_kmh=speed,
+                        timestamp=event_time,
+                        location_name=request.location_name,
+                    )
+                )
+            except Exception as geo_err:
+                logger.debug("Geofence spatial evaluation skipped: %s", geo_err)
+
         return TrackingEventResponse.model_validate(saved_event)
 
     async def _evaluate_shipment_progression(

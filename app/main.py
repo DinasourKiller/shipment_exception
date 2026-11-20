@@ -41,6 +41,7 @@ from app.modules.authentication.router import router as auth_router
 from app.modules.claims.router import router as claims_router
 from app.modules.delivery.router import router as delivery_router
 from app.modules.exceptions.router import router as exceptions_router
+from app.modules.geofence.router import router as geofence_router
 from app.modules.impact.router import router as impact_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.realtime.router import router as realtime_router
@@ -376,6 +377,10 @@ def create_application() -> FastAPI:
     )
     app.include_router(
         delivery_router,
+        prefix=settings.API_V1_PREFIX,
+    )
+    app.include_router(
+        geofence_router,
         prefix=settings.API_V1_PREFIX,
     )
     app.include_router(

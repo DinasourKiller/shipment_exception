@@ -22,6 +22,7 @@ from app.modules.recovery.models import RecoveryAuditLog, RecoveryPlan
 from app.modules.audit.models import SystemAuditLog
 from app.modules.delivery.models import DeliveryAttempt, DeliveryOtp, ProofOfDelivery
 from app.modules.claims.models import CarrierClaim, ClaimAuditEvent
+from app.modules.geofence.models import GeofenceZone, ShipmentDwellEvent
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

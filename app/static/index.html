@@ -106,6 +106,9 @@
     <button onclick="switchTab('claims')" id="nav-claims" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>⚖️</span> Claims & Penalties
     </button>
+    <button onclick="switchTab('geofences')" id="nav-geofences" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
+      <span>🌐</span> Geofencing & Dwell
+    </button>
     <button onclick="switchTab('diagnostics')" id="nav-diagnostics" class="py-3 px-1 text-slate-400 hover:text-slate-200 transition flex items-center gap-2 whitespace-nowrap">
       <span>⚡</span> System Diagnostics
     </button>
@@ -1229,6 +1232,269 @@
       </div>
     </section>
 
+    <!-- TAB 9: GEOFENCING, DYNAMIC CORRIDORS & DWELL MONITORING (PHASE 19) -->
+    <section id="tab-geofences" class="space-y-6 hidden">
+      <!-- Geofence KPIs -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Active Geofences</div>
+            <div id="geo-kpi-total" class="text-2xl font-bold text-white mt-1">0</div>
+            <div class="text-[10px] text-slate-500 mt-0.5"><span id="geo-kpi-active" class="text-emerald-400 font-semibold">0</span> boundaries enabled</div>
+          </div>
+          <div class="p-3 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xl">🌐</div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Restricted Zones</div>
+            <div id="geo-kpi-restricted" class="text-2xl font-bold text-rose-400 mt-1">0</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">Zero-tolerance intrusion perimeters</div>
+          </div>
+          <div class="p-3 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xl">⛔</div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Max Allowed Dwell</div>
+            <div id="geo-kpi-dwell" class="text-2xl font-bold text-amber-400 font-mono mt-1">120m</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">Threshold before auto-escalation</div>
+          </div>
+          <div class="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xl">⏱️</div>
+        </div>
+
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Corridor Threshold</div>
+            <div class="text-2xl font-bold text-indigo-400 font-mono mt-1">50 km</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">Max cross-track deviation</div>
+          </div>
+          <div class="p-3 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xl">🧭</div>
+        </div>
+      </div>
+
+      <!-- Action & Filter Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl">
+        <div class="flex items-center gap-2 flex-wrap">
+          <button onclick="openCreateGeofenceModal()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+            <span>➕</span> Define Geofence Zone
+          </button>
+          <input type="text" id="geo-search-input" oninput="loadGeofences()" placeholder="Search Code or Name..." class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none">
+          <select id="geo-filter-type" onchange="loadGeofences()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none">
+            <option value="">All Zone Types</option>
+            <option value="ORIGIN_FACILITY">ORIGIN_FACILITY</option>
+            <option value="TRANSIT_CROSSDOCK">TRANSIT_CROSSDOCK</option>
+            <option value="DELIVERY_DESTINATION">DELIVERY_DESTINATION</option>
+            <option value="RESTRICTED_AREA">RESTRICTED_AREA</option>
+            <option value="REST_STOP">REST_STOP</option>
+            <option value="CUSTOMS_PORT">CUSTOMS_PORT</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="loadGeofences()" class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium transition flex items-center gap-1.5">
+            <span>🔄</span> Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Two-Column Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left: Geofences Table (7 cols) -->
+        <div class="lg:col-span-7 bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden flex flex-col">
+          <div class="p-3.5 border-b border-slate-700/60 flex items-center justify-between bg-slate-900/40">
+            <h4 class="text-xs font-semibold text-white uppercase tracking-wider">Defined Geofence Boundaries</h4>
+            <span id="geo-zones-count" class="text-[11px] text-slate-400">0 zones</span>
+          </div>
+          <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left text-xs text-slate-300">
+              <thead class="bg-slate-900/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700/60">
+                <tr>
+                  <th class="py-3 px-3">Code / Name</th>
+                  <th class="py-3 px-3">Type</th>
+                  <th class="py-3 px-3">Geometry</th>
+                  <th class="py-3 px-3">Dwell Limit</th>
+                  <th class="py-3 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="geofences-tbody" class="divide-y divide-slate-800">
+                <tr><td colspan="5" class="py-6 text-center text-slate-500">Loading geofences...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right: Spatial Telemetry & Dwell Evaluator (5 cols) -->
+        <div class="lg:col-span-5 bg-slate-800/40 border border-slate-700/60 rounded-xl p-5 space-y-4">
+          <div class="border-b border-slate-700/60 pb-3 flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <span>🛰️</span> Spatial Telemetry Evaluator
+              </h3>
+              <p class="text-[11px] text-slate-400">Test live GPS coordinates against geofences, corridors & dwell timers</p>
+            </div>
+            <button onclick="openShipmentDwellHistoryModal()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700 transition">
+              📜 Dwell History
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Target Shipment</label>
+              <select id="eval-shipment-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none">
+                <option value="">Select a Shipment...</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Latitude</label>
+                <input type="number" step="0.0001" id="eval-lat" value="41.9742" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono">
+              </div>
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Longitude</label>
+                <input type="number" step="0.0001" id="eval-lon" value="-87.9073" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Speed (km/h)</label>
+                <input type="number" step="0.1" id="eval-speed" value="45.0" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 font-mono">
+              </div>
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Location Label</label>
+                <input type="text" id="eval-label" value="O'Hare Hub Perimeter" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-200">
+              </div>
+            </div>
+
+            <!-- Preset Scenarios -->
+            <div>
+              <div class="text-[10px] uppercase tracking-wider text-slate-500 mb-1.5">Quick Simulation Scenarios:</div>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button type="button" onclick="setSpatialPreset('chicago')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[10px] text-slate-300">
+                  📍 Chicago Hub
+                </button>
+                <button type="button" onclick="setSpatialPreset('restricted')" class="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-[10px] text-rose-300">
+                  ⛔ Restricted Intrusion
+                </button>
+                <button type="button" onclick="setSpatialPreset('dwell')" class="px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-[10px] text-amber-300">
+                  ⏱️ Stationary Dwell (0 km/h)
+                </button>
+                <button type="button" onclick="setSpatialPreset('corridor')" class="px-2 py-1 rounded bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-[10px] text-indigo-300">
+                  ↗️ Corridor Departure
+                </button>
+              </div>
+            </div>
+
+            <button onclick="executeSpatialEvaluation()" class="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition flex items-center justify-center gap-1.5 shadow-sm">
+              <span>⚡</span> Run Spatial Evaluation
+            </button>
+
+            <!-- Results Output Container -->
+            <div id="spatial-eval-output" class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs space-y-2 hidden">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create Geofence Modal -->
+      <div id="create-geofence-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <span class="text-blue-400">🌐</span> Define New Geofence Perimeter
+            </h3>
+            <button onclick="closeCreateGeofenceModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+          </div>
+
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Zone Code *</label>
+                <input type="text" id="new-geo-code" placeholder="GF-ORD-CHICAGO" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono uppercase focus:outline-none focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Zone Name *</label>
+                <input type="text" id="new-geo-name" placeholder="O'Hare Cargo Facility" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-blue-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Zone Type</label>
+                <select id="new-geo-type" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none">
+                  <option value="ORIGIN_FACILITY">ORIGIN_FACILITY</option>
+                  <option value="TRANSIT_CROSSDOCK" selected>TRANSIT_CROSSDOCK</option>
+                  <option value="DELIVERY_DESTINATION">DELIVERY_DESTINATION</option>
+                  <option value="RESTRICTED_AREA">RESTRICTED_AREA (Zero Tolerance)</option>
+                  <option value="REST_STOP">REST_STOP</option>
+                  <option value="CUSTOMS_PORT">CUSTOMS_PORT</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Geometry Shape</label>
+                <select id="new-geo-shape" onchange="toggleGeometryInputs()" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none">
+                  <option value="CIRCULAR" selected>CIRCULAR (Center + Radius)</option>
+                  <option value="POLYGON">POLYGON (Vertices Array)</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="circ-inputs" class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Center Lat</label>
+                <input type="number" step="0.0001" id="new-geo-lat" value="41.9742" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono">
+              </div>
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Center Lon</label>
+                <input type="number" step="0.0001" id="new-geo-lon" value="-87.9073" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono">
+              </div>
+              <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Radius (Meters)</label>
+                <input type="number" step="10" id="new-geo-radius" value="1000" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono">
+              </div>
+            </div>
+
+            <div id="poly-inputs" class="hidden">
+              <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Polygon Vertices (JSON Array of [lat, lon])</label>
+              <textarea id="new-geo-polygon" rows="3" placeholder="[[42.0, -88.0], [42.0, -87.0], [41.0, -87.0], [41.0, -88.0]]" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Max Permitted Dwell Duration (Minutes)</label>
+              <input type="number" id="new-geo-dwell" value="120" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white font-mono">
+            </div>
+
+            <div>
+              <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Description</label>
+              <textarea id="new-geo-desc" rows="2" placeholder="Primary Midwest cross-dock hub..." class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-xs text-white"></textarea>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+            <button onclick="closeCreateGeofenceModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">Cancel</button>
+            <button onclick="submitCreateGeofenceAction()" class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition">Save Geofence</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipment Dwell History Modal -->
+      <div id="shipment-dwell-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 id="dwell-history-modal-title" class="text-sm font-semibold text-white flex items-center gap-2">
+              <span>📜</span> Shipment Stationary Dwell History
+            </h3>
+            <button onclick="closeShipmentDwellHistoryModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+          </div>
+          <div id="dwell-history-list" class="flex-1 overflow-y-auto space-y-2.5 text-xs">
+            <div class="text-slate-500 text-center py-4">No dwell records found.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- TAB 5: DIAGNOSTICS & MENDIX SANDBOX -->
     <section id="tab-diagnostics" class="space-y-6 hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1331,7 +1597,7 @@
 
     // Tab Switching
     function switchTab(tab) {
-      ['auth', 'shipments', 'tracking', 'exceptions', 'users', 'analytics', 'audit', 'claims', 'diagnostics'].forEach(t => {
+      ['auth', 'shipments', 'tracking', 'exceptions', 'users', 'analytics', 'audit', 'claims', 'geofences', 'diagnostics'].forEach(t => {
         const tabEl = document.getElementById(`tab-${t}`);
         const navEl = document.getElementById(`nav-${t}`);
         if (tabEl) tabEl.classList.add('hidden');
@@ -1349,6 +1615,7 @@
       if (tab === 'analytics') loadAnalytics();
       if (tab === 'audit') { loadAuditLogs(); verifyAuditChain(); }
       if (tab === 'claims') { loadClaims(); loadClaimsSummary(); }
+      if (tab === 'geofences') { loadGeofences(); populateGeofenceShipmentDropdown(); }
       if (tab === 'diagnostics') checkHealth();
     }
 
@@ -3874,6 +4141,364 @@
       } catch (err) {
         showToast("Error downloading CSV", "error");
       }
+    }
+
+    // ==========================================
+    // PHASE 19: GEOFENCING & DWELL MONITORING
+    // ==========================================
+    let cachedGeofenceList = [];
+
+    async function loadGeofences() {
+      if (!authToken) return;
+      const search = (document.getElementById("geo-search-input")?.value || "").trim();
+      const type = document.getElementById("geo-filter-type")?.value || "";
+
+      let url = "/api/v1/geofences?page=1&page_size=50";
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (type) url += `&zone_type=${encodeURIComponent(type)}`;
+
+      try {
+        const res = await fetch(url, {
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        const tbody = document.getElementById("geofences-tbody");
+        if (!res.ok) {
+          tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-400">Failed to load geofences (${res.status})</td></tr>`;
+          return;
+        }
+        const json = await res.json();
+        const items = json.data?.items || [];
+        cachedGeofenceList = items;
+
+        document.getElementById("geo-zones-count").textContent = `${items.length} zones`;
+        document.getElementById("geo-kpi-total").textContent = items.length;
+        document.getElementById("geo-kpi-active").textContent = items.filter(z => z.is_active).length;
+        document.getElementById("geo-kpi-restricted").textContent = items.filter(z => z.zone_type === "RESTRICTED_AREA").length;
+
+        if (items.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500">No geofence perimeters defined. Click "Define Geofence Zone" to add one.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = items.map(z => {
+          let typeColor = 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+          if (z.zone_type === 'RESTRICTED_AREA') typeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20 font-bold';
+          if (z.zone_type === 'ORIGIN_FACILITY') typeColor = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+          if (z.zone_type === 'TRANSIT_CROSSDOCK') typeColor = 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
+          if (z.zone_type === 'DELIVERY_DESTINATION') typeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+
+          const shapeDesc = z.geometry_type === 'CIRCULAR'
+            ? `<span class="text-slate-300 font-mono">Radius ${z.radius_meters}m</span>`
+            : `<span class="text-indigo-400 font-mono">Polygon (${z.polygon_coordinates?.length || 0} pts)</span>`;
+
+          return `
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-3 px-3">
+                <div class="font-mono font-semibold text-white text-xs">${z.zone_code}</div>
+                <div class="text-[11px] text-slate-300">${z.name}</div>
+              </td>
+              <td class="py-3 px-3">
+                <span class="px-2 py-0.5 rounded border text-[10px] ${typeColor}">${z.zone_type}</span>
+              </td>
+              <td class="py-3 px-3">
+                <div class="text-[11px]">${shapeDesc}</div>
+                <div class="text-[10px] text-slate-500 font-mono">${z.geometry_type === 'CIRCULAR' ? `${z.center_latitude?.toFixed(4)}, ${z.center_longitude?.toFixed(4)}` : 'Spatial boundary'}</div>
+              </td>
+              <td class="py-3 px-3 font-mono text-amber-400">
+                ${z.max_permitted_dwell_minutes}m
+              </td>
+              <td class="py-3 px-3 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button onclick="setEvaluationCoordinates(${z.center_latitude || 41.9742}, ${z.center_longitude || -87.9073}, '${z.name.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] border border-slate-700 transition">Test Ping</button>
+                  <button onclick="deleteGeofenceAction('${z.id}', '${z.zone_code}')" class="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] border border-rose-500/20 transition">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      } catch (err) {
+        console.error("Failed to load geofences:", err);
+      }
+    }
+
+    async function populateGeofenceShipmentDropdown() {
+      if (!authToken) return;
+      try {
+        const res = await fetch("/api/v1/shipments?page=1&page_size=20", {
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        const select = document.getElementById("eval-shipment-select");
+        if (select && json.data && json.data.items) {
+          select.innerHTML = '<option value="">Select a Shipment...</option>' + json.data.items.map(s => `
+            <option value="${s.id}">${s.external_reference} &bull; ${s.carrier_code} (${s.origin_city} &rarr; ${s.destination_city})</option>
+          `).join("");
+          if (json.data.items.length > 0) {
+            select.value = json.data.items[0].id;
+          }
+        }
+      } catch (e) {
+        console.error("Could not populate shipment dropdown:", e);
+      }
+    }
+
+    function openCreateGeofenceModal() {
+      document.getElementById("create-geofence-modal").classList.remove("hidden");
+    }
+
+    function closeCreateGeofenceModal() {
+      document.getElementById("create-geofence-modal").classList.add("hidden");
+    }
+
+    function toggleGeometryInputs() {
+      const shape = document.getElementById("new-geo-shape").value;
+      if (shape === "CIRCULAR") {
+        document.getElementById("circ-inputs").classList.remove("hidden");
+        document.getElementById("poly-inputs").classList.add("hidden");
+      } else {
+        document.getElementById("circ-inputs").classList.add("hidden");
+        document.getElementById("poly-inputs").classList.remove("hidden");
+      }
+    }
+
+    async function submitCreateGeofenceAction() {
+      const code = document.getElementById("new-geo-code").value.trim();
+      const name = document.getElementById("new-geo-name").value.trim();
+      const zoneType = document.getElementById("new-geo-type").value;
+      const shape = document.getElementById("new-geo-shape").value;
+      const dwell = parseInt(document.getElementById("new-geo-dwell").value) || 120;
+      const desc = document.getElementById("new-geo-desc").value.trim();
+
+      if (!code || !name) {
+        showToast("Zone code and name are required", "warning");
+        return;
+      }
+
+      const payload = {
+        zone_code: code,
+        name: name,
+        zone_type: zoneType,
+        geometry_type: shape,
+        max_permitted_dwell_minutes: dwell,
+        description: desc || undefined,
+      };
+
+      if (shape === "CIRCULAR") {
+        payload.center_latitude = parseFloat(document.getElementById("new-geo-lat").value);
+        payload.center_longitude = parseFloat(document.getElementById("new-geo-lon").value);
+        payload.radius_meters = parseFloat(document.getElementById("new-geo-radius").value);
+      } else {
+        try {
+          const rawPoly = document.getElementById("new-geo-polygon").value;
+          payload.polygon_coordinates = JSON.parse(rawPoly);
+        } catch (e) {
+          showToast("Invalid JSON for polygon coordinates", "error");
+          return;
+        }
+      }
+
+      try {
+        const res = await fetch("/api/v1/geofences", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`Geofence ${code} defined successfully`, "success");
+          closeCreateGeofenceModal();
+          loadGeofences();
+        } else {
+          showToast(data.message || "Failed to define geofence", "error");
+        }
+      } catch (err) {
+        showToast("Network error creating geofence", "error");
+      }
+    }
+
+    async function deleteGeofenceAction(zoneId, zoneCode) {
+      if (!confirm(`Delete geofence perimeter ${zoneCode}?`)) return;
+      try {
+        const res = await fetch(`/api/v1/geofences/${zoneId}`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast(`Geofence ${zoneCode} deleted`, "info");
+          loadGeofences();
+        } else {
+          showToast(data.message || "Delete failed", "error");
+        }
+      } catch (err) {
+        showToast("Network error deleting geofence", "error");
+      }
+    }
+
+    function setEvaluationCoordinates(lat, lon, label) {
+      document.getElementById("eval-lat").value = lat;
+      document.getElementById("eval-lon").value = lon;
+      if (label) document.getElementById("eval-label").value = label;
+      showToast(`Evaluation coordinates set to ${label}`, "info");
+    }
+
+    function setSpatialPreset(preset) {
+      if (preset === 'chicago') {
+        document.getElementById("eval-lat").value = "41.9742";
+        document.getElementById("eval-lon").value = "-87.9073";
+        document.getElementById("eval-speed").value = "45.0";
+        document.getElementById("eval-label").value = "O'Hare Hub Perimeter";
+      } else if (preset === 'restricted') {
+        document.getElementById("eval-lat").value = "41.8781";
+        document.getElementById("eval-lon").value = "-87.6298";
+        document.getElementById("eval-speed").value = "25.0";
+        document.getElementById("eval-label").value = "Restricted Security Gate";
+      } else if (preset === 'dwell') {
+        document.getElementById("eval-lat").value = "41.5000";
+        document.getElementById("eval-lon").value = "-88.0000";
+        document.getElementById("eval-speed").value = "0.0";
+        document.getElementById("eval-label").value = "Interstate Shoulder Stop";
+      } else if (preset === 'corridor') {
+        document.getElementById("eval-lat").value = "38.5000";
+        document.getElementById("eval-lon").value = "-82.0000";
+        document.getElementById("eval-speed").value = "85.0";
+        document.getElementById("eval-label").value = "Unplanned Deviation Route";
+      }
+    }
+
+    async function executeSpatialEvaluation() {
+      const shipmentId = document.getElementById("eval-shipment-select").value;
+      if (!shipmentId) {
+        showToast("Please select a target shipment", "warning");
+        return;
+      }
+      const lat = parseFloat(document.getElementById("eval-lat").value);
+      const lon = parseFloat(document.getElementById("eval-lon").value);
+      const speed = parseFloat(document.getElementById("eval-speed").value);
+      const label = document.getElementById("eval-label").value.trim();
+
+      const outputEl = document.getElementById("spatial-eval-output");
+      outputEl.classList.remove("hidden");
+      outputEl.innerHTML = '<div class="text-slate-400 py-2">Executing geospatial checks & corridor telemetry calculation...</div>';
+
+      try {
+        const res = await fetch("/api/v1/geofences/evaluate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            shipment_id: shipmentId,
+            latitude: lat,
+            longitude: lon,
+            speed_kmh: speed,
+            location_name: label || undefined,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          outputEl.innerHTML = `<div class="text-rose-400">Spatial evaluation error: ${json.message || res.statusText}</div>`;
+          return;
+        }
+
+        const d = json.data;
+        const breachBadge = d.is_inside_restricted_zone
+          ? '<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30">RESTRICTED INTRUSION</span>'
+          : '<span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Authorized Perimeter</span>';
+
+        const dwellBadge = d.is_dwell_active
+          ? `<span class="px-1.5 py-0.5 rounded ${d.is_unauthorized_dwell ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">Stationary (${d.dwell_duration_minutes.toFixed(0)}m)</span>`
+          : `<span class="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Moving (${d.speed_kmh.toFixed(1)} km/h)</span>`;
+
+        const corridorBadge = d.corridor_deviation_km !== null
+          ? `<span class="px-1.5 py-0.5 rounded ${d.is_corridor_deviated ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30' : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'}">Offset: ${d.corridor_deviation_km.toFixed(1)} km</span>`
+          : '<span class="text-slate-500 font-mono">No corridor vector</span>';
+
+        const excHtml = d.generated_exception_type
+          ? `<div class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 font-semibold flex items-center justify-between">
+              <span>🚨 Auto-Created Incident: ${d.generated_exception_type}</span>
+              <button onclick="switchTab('exceptions')" class="underline text-[10px] text-white">View Exceptions &rarr;</button>
+            </div>`
+          : '<div class="text-[11px] text-emerald-400">✓ No operational anomalies detected</div>';
+
+        outputEl.innerHTML = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+              <span class="font-medium text-white">Spatial Evaluation Results</span>
+              <span class="text-[10px] font-mono text-slate-400">Lat: ${d.latitude.toFixed(4)}, Lon: ${d.longitude.toFixed(4)}</span>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              ${breachBadge}
+              ${dwellBadge}
+              ${corridorBadge}
+            </div>
+            <div class="text-[11px] text-slate-300">
+              <span class="text-slate-500 font-mono">Status:</span> ${d.evaluation_summary}
+            </div>
+            ${excHtml}
+          </div>
+        `;
+        showToast("Spatial evaluation complete", "success");
+      } catch (err) {
+        outputEl.innerHTML = '<div class="text-rose-400">Network error executing spatial evaluation</div>';
+      }
+    }
+
+    async function openShipmentDwellHistoryModal() {
+      const shipmentId = document.getElementById("eval-shipment-select").value;
+      if (!shipmentId) {
+        showToast("Please select a target shipment first", "warning");
+        return;
+      }
+      document.getElementById("shipment-dwell-modal").classList.remove("hidden");
+      const listEl = document.getElementById("dwell-history-list");
+      listEl.innerHTML = '<div class="text-slate-500 text-center py-4">Loading dwell history...</div>';
+
+      try {
+        const res = await fetch(`/api/v1/geofences/shipments/${shipmentId}/dwells`, {
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        if (!res.ok) {
+          listEl.innerHTML = '<div class="text-rose-400 text-center py-4">Failed to load dwell events</div>';
+          return;
+        }
+        const json = await res.json();
+        const dwells = json.data || [];
+        if (dwells.length === 0) {
+          listEl.innerHTML = '<div class="text-slate-500 text-center py-4">No stationary dwell periods recorded for this shipment.</div>';
+          return;
+        }
+
+        listEl.innerHTML = dwells.map((d, i) => `
+          <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-mono text-xs font-semibold ${d.is_authorized ? 'text-amber-400' : 'text-rose-400'}">
+                #${i + 1} &bull; ${d.dwell_duration_minutes.toFixed(1)} mins ${d.is_authorized ? 'Stationary Stop' : 'UNAUTHORIZED DWELL'}
+              </span>
+              <span class="text-[10px] text-slate-500 font-mono">${formatDate(d.dwell_started_at)}</span>
+            </div>
+            <div class="text-[11px] text-slate-300">
+              Zone: <span class="font-semibold text-white">${d.geofence_zone_name || 'Off-Terminal / Unregistered Waypoint'}</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+              <span>Coords: (${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)})</span>
+              <span>Pings: ${d.stationary_pings_count}</span>
+            </div>
+            ${d.is_alert_dispatched ? '<div class="text-[10px] text-rose-300 font-semibold">🚨 Incident Alert Dispatched</div>' : ''}
+          </div>
+        `).join("");
+      } catch (err) {
+        listEl.innerHTML = '<div class="text-rose-400 text-center py-4">Network error loading dwell history</div>';
+      }
+    }
+
+    function closeShipmentDwellHistoryModal() {
+      document.getElementById("shipment-dwell-modal").classList.add("hidden");
     }
   </script>
 </body>
