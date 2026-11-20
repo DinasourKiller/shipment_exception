@@ -71,7 +71,7 @@ class Settings(BaseSettings):
 
     # AI Runtime - Ollama
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434", description="Ollama API base URL")
-    OLLAMA_MODEL: str = Field(default="llama3.1:8b", description="Default Ollama model for analysis")
+    OLLAMA_MODEL: str = Field(default="gemma2:2b", description="Default Ollama model for analysis")
     OLLAMA_TIMEOUT_SECONDS: int = Field(default=30, description="Timeout for LLM inference requests")
 
     # Logging

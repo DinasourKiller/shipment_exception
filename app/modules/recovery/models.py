@@ -37,6 +37,9 @@ class RecoveryPlanType(str, enum.Enum):
     OTHER = "OTHER"
 
 
+RecoveryStrategy = RecoveryPlanType
+
+
 class RecoveryStatus(str, enum.Enum):
     """Lifecycle state machine for recovery execution."""
 

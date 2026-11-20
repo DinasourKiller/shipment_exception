@@ -34,6 +34,7 @@ from app.core.logging import (
 )
 from app.database.connection import check_database_health
 from app.integrations.mendix.sandbox import sandbox_router
+from app.modules.ai.router import router as ai_router
 from app.modules.analytics.router import router as analytics_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.exceptions.router import router as exceptions_router
@@ -146,6 +147,10 @@ OPENAPI_TAGS = [
         "name": "Analytics & Reporting",
         "description": "Carrier performance scorecards, root cause Pareto rankings, SLA compliance metrics, and exports.",
     },
+    {
+        "name": "AI & Diagnostics",
+        "description": "Local Ollama LLM integration, root cause diagnosis, recovery recommendations, and proactive customer communications.",
+    },
 ]
 
 SWAGGER_DESCRIPTION = """
@@ -239,7 +244,7 @@ def create_application() -> FastAPI:
                 "api": "healthy",
                 "database": "healthy" if db_healthy else f"unhealthy: {db_detail}",
                 "mendix_adapter": "configured",
-                "ai_provider": "configured",
+                "ai_provider": f"configured ({settings.OLLAMA_MODEL})",
             },
         )
         return ApiResponse(
@@ -333,6 +338,11 @@ def create_application() -> FastAPI:
         analytics_router,
         prefix=f"{settings.API_V1_PREFIX}/analytics",
         tags=["Analytics & Reporting"],
+    )
+    app.include_router(
+        ai_router,
+        prefix=f"{settings.API_V1_PREFIX}/ai",
+        tags=["AI & Diagnostics"],
     )
     app.include_router(
         sandbox_router,
