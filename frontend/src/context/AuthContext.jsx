@@ -118,37 +118,97 @@ export function AuthProvider({ children }) {
       console.warn('Backend login attempt had issue:', e);
     }
 
+    // Check custom registered users first
+    try {
+      const customUsers = JSON.parse(localStorage.getItem('BRIDGES_CUSTOM_USERS') || '[]');
+      const foundCustom = customUsers.find(
+        (u) => u.email.toLowerCase() === cleanEmail
+      );
+      if (foundCustom) {
+        matched = foundCustom;
+      }
+    } catch (e) {}
+
     // Match to demo user profile
-    let matched = null;
-    if (cleanEmail === 'admin@gmail.com' || cleanEmail === 'admin@controltower.corp') {
-      matched = DEMO_USERS.admin;
-    } else if (cleanEmail === 'cta@gmail.com' || cleanEmail === 'analyst@gmail.com' || cleanEmail === 'analyst@controltower.corp') {
-      matched = DEMO_USERS.analyst;
-    } else if (cleanEmail === 'dispatcher@gmail.com' || cleanEmail === 'dispatcher@controltower.corp') {
-      matched = DEMO_USERS.dispatcher;
-    } else if (cleanEmail === 'carrier@gmail.com' || cleanEmail === 'carrier@controltower.corp') {
-      matched = DEMO_USERS.carrier;
-    } else if (cleanEmail === 'warehouse@gmail.com' || cleanEmail === 'manager@controltower.corp') {
-      matched = DEMO_USERS.warehouse;
-    } else if (cleanEmail === 'cs@gmail.com') {
-      matched = DEMO_USERS.cs;
-    } else if (cleanEmail === 'customer@gmail.com') {
-      matched = DEMO_USERS.customer;
-    } else {
-      matched = {
-        id: 'USR-' + Math.floor(Math.random() * 900 + 100),
-        name: cleanEmail.split('@')[0],
-        email: cleanEmail,
-        role: 'Administrator',
-        title: 'Platform Operator',
-        phone: '+1 (555) 019-0000',
-        avatar: DEMO_USERS.admin.avatar,
-        defaultRoute: 'dashboard',
-      };
+    if (!matched) {
+      if (cleanEmail === 'admin@gmail.com' || cleanEmail === 'admin@controltower.corp') {
+        matched = DEMO_USERS.admin;
+      } else if (cleanEmail === 'cta@gmail.com' || cleanEmail === 'analyst@gmail.com' || cleanEmail === 'analyst@controltower.corp') {
+        matched = DEMO_USERS.analyst;
+      } else if (cleanEmail === 'dispatcher@gmail.com' || cleanEmail === 'dispatcher@controltower.corp') {
+        matched = DEMO_USERS.dispatcher;
+      } else if (cleanEmail === 'carrier@gmail.com' || cleanEmail === 'carrier@controltower.corp') {
+        matched = DEMO_USERS.carrier;
+      } else if (cleanEmail === 'warehouse@gmail.com' || cleanEmail === 'manager@controltower.corp') {
+        matched = DEMO_USERS.warehouse;
+      } else if (cleanEmail === 'cs@gmail.com') {
+        matched = DEMO_USERS.cs;
+      } else if (cleanEmail === 'customer@gmail.com') {
+        matched = DEMO_USERS.customer;
+      } else {
+        matched = {
+          id: 'USR-' + Math.floor(Math.random() * 900 + 100),
+          name: cleanEmail.split('@')[0],
+          email: cleanEmail,
+          role: 'Administrator',
+          title: 'Platform Operator',
+          phone: '+1 (555) 019-0000',
+          avatar: DEMO_USERS.admin.avatar,
+          defaultRoute: 'dashboard',
+        };
+      }
     }
 
     setUser(matched);
     return { success: true, user: matched };
+  };
+
+  const register = async ({ name, email, password, role, title, organization }) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanName = (name || '').trim();
+    const cleanRole = role || 'Dispatcher / Transport Planner';
+
+    // Route mapping based on chosen role
+    let defaultRoute = 'dashboard';
+    if (cleanRole.includes('Analyst')) defaultRoute = 'analyst_dashboard';
+    else if (cleanRole.includes('Dispatcher') || cleanRole.includes('Planner')) defaultRoute = 'dispatcher_dashboard';
+    else if (cleanRole.includes('Carrier')) defaultRoute = 'carrier_dashboard';
+    else if (cleanRole.includes('Warehouse')) defaultRoute = 'warehouse_dashboard';
+    else if (cleanRole.includes('Customer Service') || cleanRole.includes('CS')) defaultRoute = 'cs_dashboard';
+    else if (cleanRole.includes('Customer') || cleanRole.includes('Shipper')) defaultRoute = 'customer_home';
+
+    const newUser = {
+      id: 'USR-' + Math.floor(Math.random() * 9000 + 1000),
+      name: cleanName || cleanEmail.split('@')[0],
+      email: cleanEmail,
+      role: cleanRole,
+      title: title || `${cleanRole} Specialist`,
+      organization: organization || 'Global Logistics Network',
+      phone: '+1 (555) 019-' + Math.floor(Math.random() * 9000 + 1000),
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      defaultRoute,
+    };
+
+    // Save in custom registered users registry
+    try {
+      const existing = JSON.parse(localStorage.getItem('BRIDGES_CUSTOM_USERS') || '[]');
+      const filtered = existing.filter((u) => u.email.toLowerCase() !== cleanEmail);
+      filtered.push(newUser);
+      localStorage.setItem('BRIDGES_CUSTOM_USERS', JSON.stringify(filtered));
+    } catch (e) {}
+
+    // Attempt backend registration / user creation if API is connected
+    try {
+      await api.post('/api/v1/auth/register', {
+        email: cleanEmail,
+        password,
+        name: cleanName,
+        role: cleanRole,
+      }).catch(() => {});
+    } catch (e) {}
+
+    setUser(newUser);
+    return { success: true, user: newUser };
   };
 
   const logout = async () => {
@@ -182,6 +242,7 @@ export function AuthProvider({ children }) {
         role: user?.role || 'Guest',
         isAuthenticated: !!user,
         login,
+        register,
         logout,
         switchRole,
       }}
