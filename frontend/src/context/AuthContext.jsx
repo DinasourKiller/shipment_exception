@@ -118,6 +118,8 @@ export function AuthProvider({ children }) {
       console.warn('Backend login attempt had issue:', e);
     }
 
+    let matched = null;
+
     // Check custom registered users first
     try {
       const customUsers = JSON.parse(localStorage.getItem('BRIDGES_CUSTOM_USERS') || '[]');
