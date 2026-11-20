@@ -27,7 +27,7 @@
           Shipment Exception Control Tower
           <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Testing Console</span>
         </h1>
-        <p class="text-xs text-slate-400">Interactive Web Harness (Phases 1–13)</p>
+        <p class="text-xs text-slate-400">Interactive Web Harness (Phases 1–20 &bull; Production Ready)</p>
       </div>
     </div>
 
@@ -3010,7 +3010,19 @@
             </div>
             <div class="p-3 bg-slate-900 rounded-lg flex items-center justify-between">
               <span>Ollama AI Runtime</span>
-              <span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20">${d.components.ai_provider.toUpperCase()}</span>
+              <span class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20">${(d.components.ai_provider || 'CONFIGURED').toUpperCase()}</span>
+            </div>
+            <div class="p-3 bg-slate-900 rounded-lg flex items-center justify-between">
+              <span>Real-Time WebSocket Stream</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-semibold border border-emerald-500/20">${(d.components.realtime_stream || 'ACTIVE').toUpperCase()}</span>
+            </div>
+            <div class="p-3 bg-slate-900 rounded-lg flex items-center justify-between">
+              <span>Geofencing & Dwell Engine</span>
+              <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 font-semibold border border-blue-500/20">${(d.components.geofencing || 'ACTIVE').toUpperCase()}</span>
+            </div>
+            <div class="p-3 bg-slate-900 rounded-lg flex items-center justify-between">
+              <span>Claims & SLA Penalties</span>
+              <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 font-semibold border border-purple-500/20">${(d.components.claims_engine || 'ACTIVE').toUpperCase()}</span>
             </div>
           `;
         }

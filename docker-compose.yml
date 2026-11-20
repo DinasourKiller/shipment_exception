@@ -1,4 +1,7 @@
 services:
+  # ==========================================
+  # Enterprise Control Tower API & Web Console
+  # ==========================================
   api:
     build:
       context: .
@@ -8,21 +11,34 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
+      - DEBUG=False
       - POSTGRES_SERVER=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=shipment_control_tower
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=gemma2:2b
+      - MENDIX_BASE_URL=http://api:8000/api/v1/mock/mendix
+      - WORKERS=2
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     volumes:
-      - .:/app
+      - ./docs:/app/docs:ro
     networks:
       - control_tower_network
 
+  # ==========================================
+  # PostgreSQL 16 Enterprise Relational Store
+  # ==========================================
   postgres:
     image: postgres:16-alpine
     container_name: control_tower_postgres
@@ -43,8 +59,29 @@ services:
     networks:
       - control_tower_network
 
+  # ==========================================
+  # Ollama Local LLM AI Inference Service
+  # ==========================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: control_tower_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - control_tower_network
+
 volumes:
   postgres_data:
+    driver: local
+  ollama_models:
     driver: local
 
 networks:

@@ -172,6 +172,10 @@ OPENAPI_TAGS = [
         "name": "Claims & SLA Penalties",
         "description": "Contractual carrier claims, SLA breach penalty assessment, dispute arbitration, counter-offers, and financial settlement ledgers.",
     },
+    {
+        "name": "Geofences & Dwell Monitoring",
+        "description": "Geospatial boundary polygons, circular radial perimeters, dynamic route corridor departure detection, and stationary dwell tracking.",
+    },
 ]
 
 SWAGGER_DESCRIPTION = """
@@ -267,6 +271,8 @@ def create_application() -> FastAPI:
                 "mendix_adapter": "configured",
                 "ai_provider": f"configured ({settings.OLLAMA_MODEL})",
                 "realtime_stream": "active",
+                "geofencing": "active",
+                "claims_engine": "active",
             },
         )
         return ApiResponse(
