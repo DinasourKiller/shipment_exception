@@ -31,7 +31,10 @@ class MendixClient(BaseIntegrationAdapter):
         transport: Optional[Any] = None,
     ):
         settings = get_settings()
-        self._base_url = (base_url or settings.MENDIX_BASE_URL).rstrip("/")
+        raw_url = (base_url or settings.MENDIX_BASE_URL).rstrip("/")
+        if "enterprise.local" in raw_url:
+            raw_url = f"http://127.0.0.1:{settings.PORT}{settings.API_V1_PREFIX}/mock/mendix"
+        self._base_url = raw_url
         self._api_key = api_key or settings.MENDIX_API_KEY
         self._timeout = timeout_seconds or float(settings.MENDIX_TIMEOUT_SECONDS)
         self._max_retries = max_retries if max_retries is not None else settings.MENDIX_MAX_RETRIES

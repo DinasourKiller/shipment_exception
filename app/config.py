@@ -62,7 +62,7 @@ class Settings(BaseSettings):
 
     # External Integrations - Mendix
     MENDIX_BASE_URL: str = Field(
-        default="https://mendix-test.enterprise.local/rest",
+        default="http://127.0.0.1:8000/api/v1/mock/mendix",
         description="Base URL for Mendix REST API",
     )
     MENDIX_API_KEY: str = Field(default="mendix-placeholder-key", description="Mendix REST API Key")
