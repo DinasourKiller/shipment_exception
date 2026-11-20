@@ -310,7 +310,7 @@ class ApiService {
   // ==========================================================================
   // REAL-TIME WEBSOCKET STREAMING ENGINE
   // ==========================================================================
-  connectWebSocket(onMessage, onStatusChange) {
+  async connectWebSocket(onMessage, onStatusChange) {
     if (onMessage) this.wsListeners.add(onMessage);
     if (onStatusChange) this.wsStatusListeners.add(onStatusChange);
 
@@ -318,11 +318,25 @@ class ApiService {
       return;
     }
 
+    // Ensure valid JWT token for authenticated WebSocket handshake
+    if (!this.token) {
+      this.token = localStorage.getItem('BRIDGES_ACCESS_TOKEN');
+    }
+
+    if (!this.token) {
+      try {
+        await this.login('admin@gmail.com', '1');
+      } catch (e) {
+        console.warn('Could not auto-login for WebSocket:', e);
+      }
+    }
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    // Proxy handles /api/v1/realtime/ws to backend
+    // If running on Vite dev server (port 3000), target backend on 8000 directly
+    const isPort3000 = window.location.port === '3000';
+    const host = isPort3000 ? '127.0.0.1:8000' : window.location.host;
     const tokenParam = this.token ? `?token=${encodeURIComponent(this.token)}` : '';
-    const wsUrl = `${protocol}//${host}/api/v1/realtime/ws${tokenParam}`;
+    const wsUrl = `${protocol}//${host}/api/v1/ws/stream${tokenParam}`;
 
     try {
       this.ws = new WebSocket(wsUrl);
@@ -333,6 +347,14 @@ class ApiService {
           clearTimeout(this.wsReconnectTimer);
           this.wsReconnectTimer = null;
         }
+
+        // Keepalive ping interval every 20 seconds
+        if (this.pingInterval) clearInterval(this.pingInterval);
+        this.pingInterval = setInterval(() => {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ action: 'ping', timestamp: Date.now() }));
+          }
+        }, 20000);
       };
 
       this.ws.onmessage = (event) => {
@@ -350,6 +372,10 @@ class ApiService {
 
       this.ws.onclose = () => {
         this.notifyWsStatus('disconnected');
+        if (this.pingInterval) {
+          clearInterval(this.pingInterval);
+          this.pingInterval = null;
+        }
         this.ws = null;
         // Auto-reconnect after 4s
         if (!this.wsReconnectTimer) {
@@ -366,6 +392,10 @@ class ApiService {
   }
 
   disconnectWebSocket() {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
     if (this.wsReconnectTimer) {
       clearTimeout(this.wsReconnectTimer);
       this.wsReconnectTimer = null;

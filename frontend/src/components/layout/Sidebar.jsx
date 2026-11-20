@@ -126,8 +126,8 @@ export default function Sidebar({ currentView, onNavigate, isCollapsed, onToggle
       </div>
 
       {/* Navigation Menu */}
-      <nav className="sidebar-nav">
-        <ul className="nav-list">
+      <nav className="sidebar-nav" style={{ paddingBottom: '40px', flex: 1, overflowY: 'auto' }}>
+        <ul className="nav-list" style={{ gap: '2px' }}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
@@ -137,6 +137,7 @@ export default function Sidebar({ currentView, onNavigate, isCollapsed, onToggle
                   className={`nav-link ${isActive ? 'active' : ''}`}
                   onClick={() => onNavigate(item.id)}
                   title={item.label}
+                  style={{ padding: '7.5px 12px', fontSize: '12px' }}
                 >
                   <div className="nav-link-left">
                     <span className="nav-icon">

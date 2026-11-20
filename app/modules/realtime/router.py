@@ -31,6 +31,8 @@ router = APIRouter(prefix="/ws", tags=["Real-Time Streaming"])
 
 
 @router.websocket("/stream")
+@router.websocket("/ws")
+@router.websocket("")
 async def websocket_stream_endpoint(
     websocket: WebSocket,
     token: Optional[str] = Query(default=None),

@@ -395,6 +395,10 @@ def create_application() -> FastAPI:
         prefix=settings.API_V1_PREFIX,
     )
     app.include_router(
+        realtime_router,
+        prefix=f"{settings.API_V1_PREFIX}/realtime",
+    )
+    app.include_router(
         sandbox_router,
         prefix=settings.API_V1_PREFIX,
     )
