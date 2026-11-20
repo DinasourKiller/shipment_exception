@@ -16,46 +16,60 @@ import {
 
 const ENTERPRISE_ROLES = [
   {
-    id: 'dispatcher',
-    name: 'Dispatcher / Transport Planner',
-    description: 'Fleet routing, live corridor deviations & tender dispatching',
-    defaultEmail: 'dispatcher@gmail.com',
+    id: 'admin',
+    name: 'System Administrator',
+    description: 'Full workspace governance, cryptographic audit trails & RBAC',
+    defaultEmail: 'admin@controltower.corp',
+    defaultPassword: 'Password123!',
   },
   {
     id: 'analyst',
     name: 'Control Tower Analyst',
     description: 'Thermal breach triage, SLA forensic root cause & telemetry',
-    defaultEmail: 'cta@gmail.com',
+    defaultEmail: 'analyst@controltower.corp',
+    defaultPassword: 'Password123!',
   },
   {
-    id: 'admin',
-    name: 'System Administrator',
-    description: 'Full workspace governance, cryptographic audit trails & RBAC',
-    defaultEmail: 'admin@gmail.com',
+    id: 'dispatcher',
+    name: 'Dispatcher / Transport Planner',
+    description: 'Fleet routing, live corridor deviations & tender dispatching',
+    defaultEmail: 'dispatcher@controltower.corp',
+    defaultPassword: 'Password123!',
+  },
+  {
+    id: 'manager',
+    name: 'Operations Manager',
+    description: 'Multi-hub governance, operational SLAs & escalation approvals',
+    defaultEmail: 'manager@controltower.corp',
+    defaultPassword: 'Password123!',
   },
   {
     id: 'carrier',
     name: 'Carrier Operations User',
     description: 'Tender bidding, driver telematics & electronic POD handover',
-    defaultEmail: 'carrier@gmail.com',
+    defaultEmail: 'carrier@controltower.corp',
+    defaultPassword: 'Password123!',
   },
   {
     id: 'warehouse',
     name: 'Warehouse Supervisor',
     description: 'Dock door assignments, cross-dock dwell & hub capacity',
-    defaultEmail: 'warehouse@gmail.com',
+    defaultEmail: 'warehouse@controltower.corp',
+    defaultPassword: 'Password123!',
   },
   {
     id: 'cs',
     name: 'Customer Service Specialist',
     description: 'Consignment inquiry tickets, proactive SLA claims & care',
-    defaultEmail: 'cs@gmail.com',
+    defaultEmail: 'support@controltower.corp',
+    defaultPassword: 'Password123!',
   },
   {
     id: 'customer',
     name: 'Shipper / Enterprise Customer',
     description: 'Multi-modal shipment tracking, deviation alerts & self-service',
-    defaultEmail: 'customer@gmail.com',
+    defaultEmail: 'customer@controltower.corp',
+    defaultPassword: 'Password123!',
   },
 ];
 
@@ -64,9 +78,9 @@ export default function Login({ onLoginSuccess }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [showPassword, setShowPassword] = useState(false);
 
-  // Login form state
-  const [loginEmail, setLoginEmail] = useState('dispatcher@gmail.com');
-  const [loginPassword, setLoginPassword] = useState('1');
+  // Login form state - defaults to System Administrator
+  const [loginEmail, setLoginEmail] = useState('admin@controltower.corp');
+  const [loginPassword, setLoginPassword] = useState('Password123!');
   const [rememberMe, setRememberMe] = useState(true);
 
   // Registration / Role creation state
@@ -149,7 +163,7 @@ export default function Login({ onLoginSuccess }) {
   // Quick preset helper to quickly populate standard credentials for testing
   const handlePresetSelect = (roleItem) => {
     setLoginEmail(roleItem.defaultEmail);
-    setLoginPassword('1');
+    setLoginPassword(roleItem.defaultPassword || 'Password123!');
     setError('');
   };
 
@@ -513,15 +527,15 @@ export default function Login({ onLoginSuccess }) {
             {/* Quick role autofill helper */}
             <div style={{ marginTop: '10px', paddingTop: '12px', borderTop: '1px solid #F1F5F9' }}>
               <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
-                <span>Quick Fill Preset Role:</span>
-                <span style={{ color: '#94A3B8' }}>password: 1</span>
+                <span>DB Seeded Role Credentials:</span>
+                <span style={{ color: '#0D5CE5', fontWeight: 600 }}>pass: Password123!</span>
               </div>
               <select
                 onChange={(e) => {
                   const found = ENTERPRISE_ROLES.find((r) => r.id === e.target.value);
                   if (found) handlePresetSelect(found);
                 }}
-                defaultValue="dispatcher"
+                defaultValue="admin"
                 style={{
                   width: '100%',
                   height: '32px',

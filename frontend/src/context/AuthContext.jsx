@@ -137,13 +137,21 @@ export function AuthProvider({ children }) {
         matched = DEMO_USERS.analyst;
       } else if (cleanEmail === 'dispatcher@gmail.com' || cleanEmail === 'dispatcher@controltower.corp') {
         matched = DEMO_USERS.dispatcher;
+      } else if (cleanEmail === 'manager@controltower.corp') {
+        matched = {
+          ...DEMO_USERS.admin,
+          name: 'Elena Rostova',
+          role: 'Operations Manager',
+          title: 'Regional Operations Manager',
+          defaultRoute: 'dashboard',
+        };
       } else if (cleanEmail === 'carrier@gmail.com' || cleanEmail === 'carrier@controltower.corp') {
         matched = DEMO_USERS.carrier;
-      } else if (cleanEmail === 'warehouse@gmail.com' || cleanEmail === 'manager@controltower.corp') {
+      } else if (cleanEmail === 'warehouse@gmail.com' || cleanEmail === 'warehouse@controltower.corp') {
         matched = DEMO_USERS.warehouse;
-      } else if (cleanEmail === 'cs@gmail.com') {
+      } else if (cleanEmail === 'cs@gmail.com' || cleanEmail === 'support@controltower.corp') {
         matched = DEMO_USERS.cs;
-      } else if (cleanEmail === 'customer@gmail.com') {
+      } else if (cleanEmail === 'customer@gmail.com' || cleanEmail === 'customer@controltower.corp') {
         matched = DEMO_USERS.customer;
       } else {
         matched = {
