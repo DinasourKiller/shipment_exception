@@ -56,7 +56,7 @@ export default function Login({ onLoginSuccess }) {
       style={{
         width: '100vw',
         height: '100vh',
-        minHeight: '600px',
+        minHeight: '480px',
         position: 'relative',
         display: 'flex',
         alignItems: 'center',
@@ -69,27 +69,28 @@ export default function Login({ onLoginSuccess }) {
         fontFamily: '"Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        paddingRight: 'min(12vw, 140px)',
+        paddingRight: 'max(110px, 12.5vw)',
       }}
     >
-      {/* Right Column: Form Area */}
+      {/* Right Column: Form Area - Exactly matched to mockup proportions */}
       <div
         style={{
-          width: '100%',
-          maxWidth: '380px',
+          width: '240px',
           boxSizing: 'border-box',
           position: 'relative',
           zIndex: 10,
-          padding: '24px 8px',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <h1
           style={{
-            fontSize: '32px',
+            fontSize: '22px',
             fontWeight: 700,
             color: '#0F172A',
-            margin: '0 0 6px 0',
-            letterSpacing: '-0.4px',
+            margin: '0 0 4px 0',
+            letterSpacing: '-0.3px',
+            lineHeight: 1.2,
           }}
         >
           Login
@@ -97,10 +98,11 @@ export default function Login({ onLoginSuccess }) {
 
         <p
           style={{
-            fontSize: '13px',
+            fontSize: '11px',
             color: '#64748B',
-            margin: '0 0 24px 0',
+            margin: '0 0 18px 0',
             fontWeight: 400,
+            lineHeight: 1.35,
           }}
         >
           Welcome to Shipment exception control management
@@ -109,14 +111,14 @@ export default function Login({ onLoginSuccess }) {
         {error && (
           <div
             style={{
-              padding: '8px 12px',
-              borderRadius: '6px',
+              padding: '6px 10px',
+              borderRadius: '4px',
               background: '#FEF2F2',
               border: '1px solid #FCA5A5',
               color: '#B91C1C',
-              fontSize: '12px',
+              fontSize: '10.5px',
               fontWeight: 500,
-              marginBottom: '16px',
+              marginBottom: '12px',
             }}
           >
             {error}
@@ -125,15 +127,15 @@ export default function Login({ onLoginSuccess }) {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
           {/* E-mail input */}
-          <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: '12px' }}>
             <label
               htmlFor="login-email"
               style={{
                 display: 'block',
-                fontSize: '12.5px',
+                fontSize: '11px',
                 fontWeight: 500,
                 color: '#475569',
-                marginBottom: '6px',
+                marginBottom: '4px',
               }}
             >
               E-mail
@@ -147,12 +149,12 @@ export default function Login({ onLoginSuccess }) {
               placeholder="name@company.com"
               style={{
                 width: '100%',
-                height: '42px',
-                padding: '0 14px',
+                height: '30px',
+                padding: '0 10px',
                 borderRadius: '6px',
                 backgroundColor: '#F1F4F9',
                 border: '1px solid transparent',
-                fontSize: '13.5px',
+                fontSize: '11.5px',
                 color: '#0F172A',
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -161,7 +163,7 @@ export default function Login({ onLoginSuccess }) {
               onFocus={(e) => {
                 e.target.style.backgroundColor = '#FFFFFF';
                 e.target.style.borderColor = '#0D5CE5';
-                e.target.style.boxShadow = '0 0 0 3px rgba(13, 92, 229, 0.1)';
+                e.target.style.boxShadow = '0 0 0 2px rgba(13, 92, 229, 0.12)';
               }}
               onBlur={(e) => {
                 e.target.style.backgroundColor = '#F1F4F9';
@@ -172,15 +174,15 @@ export default function Login({ onLoginSuccess }) {
           </div>
 
           {/* Password input */}
-          <div style={{ marginBottom: '22px' }}>
+          <div style={{ marginBottom: '16px' }}>
             <label
               htmlFor="login-password"
               style={{
                 display: 'block',
-                fontSize: '12.5px',
+                fontSize: '11px',
                 fontWeight: 500,
                 color: '#475569',
-                marginBottom: '6px',
+                marginBottom: '4px',
               }}
             >
               Password
@@ -194,12 +196,12 @@ export default function Login({ onLoginSuccess }) {
               placeholder="••••••••"
               style={{
                 width: '100%',
-                height: '42px',
-                padding: '0 14px',
+                height: '30px',
+                padding: '0 10px',
                 borderRadius: '6px',
                 backgroundColor: '#F1F4F9',
                 border: '1px solid transparent',
-                fontSize: '13.5px',
+                fontSize: '11.5px',
                 color: '#0F172A',
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -208,7 +210,7 @@ export default function Login({ onLoginSuccess }) {
               onFocus={(e) => {
                 e.target.style.backgroundColor = '#FFFFFF';
                 e.target.style.borderColor = '#0D5CE5';
-                e.target.style.boxShadow = '0 0 0 3px rgba(13, 92, 229, 0.1)';
+                e.target.style.boxShadow = '0 0 0 2px rgba(13, 92, 229, 0.12)';
               }}
               onBlur={(e) => {
                 e.target.style.backgroundColor = '#F1F4F9';
@@ -224,18 +226,18 @@ export default function Login({ onLoginSuccess }) {
             disabled={loading}
             style={{
               width: '100%',
-              height: '42px',
+              height: '30px',
               borderRadius: '6px',
               backgroundColor: '#0D5CE5',
               color: '#FFFFFF',
               border: 'none',
-              fontSize: '14px',
+              fontSize: '12px',
               fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 6px rgba(13, 92, 229, 0.25)',
+              boxShadow: '0 2px 4px rgba(13, 92, 229, 0.2)',
               transition: 'background-color 0.15s ease',
               opacity: loading ? 0.7 : 1,
             }}
@@ -253,10 +255,10 @@ export default function Login({ onLoginSuccess }) {
         {/* Demo Access Roles Card */}
         <div
           style={{
-            marginTop: '20px',
+            marginTop: '14px',
             border: '1px solid #E2E8F0',
             borderRadius: '6px',
-            padding: '8px 10px 10px 10px',
+            padding: '6px 7px 7px 7px',
             backgroundColor: '#FFFFFF',
             boxSizing: 'border-box',
           }}
@@ -266,13 +268,13 @@ export default function Login({ onLoginSuccess }) {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '8px',
+              marginBottom: '5px',
             }}
           >
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>
+            <span style={{ fontSize: '9.5px', fontWeight: 700, color: '#0F172A' }}>
               Demo Access Roles:
             </span>
-            <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 400 }}>
+            <span style={{ fontSize: '9px', color: '#64748B', fontWeight: 400 }}>
               password: 1
             </span>
           </div>
@@ -281,7 +283,7 @@ export default function Login({ onLoginSuccess }) {
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(7, 1fr)',
-              gap: '3px',
+              gap: '2px',
               alignItems: 'stretch',
             }}
           >
@@ -293,26 +295,26 @@ export default function Login({ onLoginSuccess }) {
                   type="button"
                   onClick={() => handleSelectRole(role)}
                   style={{
-                    height: '32px',
-                    padding: '0 2px',
+                    height: '21px',
+                    padding: '0 1px',
                     border: isSelected ? '1px solid #18217E' : '1px solid #CBD5E1',
-                    borderRadius: '4px',
+                    borderRadius: '3px',
                     backgroundColor: isSelected ? '#18217E' : '#FFFFFF',
                     color: isSelected ? '#FFFFFF' : (role.isCustServ ? '#991B1B' : '#1E293B'),
-                    fontSize: '10.5px',
+                    fontSize: '8.5px',
                     fontWeight: isSelected ? 700 : 500,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     textAlign: 'center',
-                    lineHeight: '1.1',
+                    lineHeight: '1.0',
                     transition: 'all 0.15s ease',
                   }}
                   title={`Login as ${role.label} (${role.email})`}
                 >
                   {role.isCustServ ? (
-                    <span>
+                    <span style={{ fontSize: '7.5px', lineHeight: '1.0' }}>
                       Cust
                       <br />
                       Serv
